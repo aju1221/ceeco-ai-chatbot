@@ -66,7 +66,7 @@ const ChatMessage = ({ msg }) => {
 
 // --- MAIN APP COMPONENT ---
 
-export default function CeecoChatbot() {
+export default function App() {
   // State
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState("");
