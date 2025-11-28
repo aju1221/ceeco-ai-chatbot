@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, Bot, MapPin, DollarSign, School, ArrowLeft, RefreshCcw, Briefcase, GraduationCap, Edit2, Wallet } from 'lucide-react';
+import { Send, User, Bot, MapPin, DollarSign, School, ArrowLeft, RefreshCcw, Briefcase, GraduationCap, Edit2, Wallet, Phone, MessageCircle, Star, Sparkles, X } from 'lucide-react';
 
 // --- DATA FROM UPLOADED EXCEL SHEET (Complete List) ---
 const universityDatabase = [
@@ -79,6 +79,24 @@ const DYNAMIC_SLABS = [...new Set(universityDatabase.map(u => u.slab))].sort((a,
 
 const GREETINGS = ["hi", "hello", "hey", "hii", "hellooo", "hola", "namaste", "namaskaram", "good morning", "good evening", "hlo"];
 
+// --- HELPER FUNCTIONS ---
+const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
+
+// Map country names to ISO codes for Flag CDN
+const countryCodes = {
+  "Georgia": "ge",
+  "Uzbekistan": "uz",
+  "Russia": "ru",
+  "Egypt": "eg",
+  "Armenia": "am",
+  "Bulgaria": "bg",
+  "Hungary": "hu",
+  "Moldova": "md",
+  "Kazakhstan": "kz",
+  "Kyrgyzstan": "kg",
+  "Azerbaijan": "az"
+};
+
 // --- HELPER COMPONENTS ---
 
 const TypingIndicator = () => (
@@ -93,7 +111,7 @@ const ChatMessage = ({ msg }) => {
   const isBot = msg.sender === 'bot';
   return (
     <div className={`flex w-full ${isBot ? 'justify-start' : 'justify-end'} mb-4 animate-fade-in-up`}>
-      <div className={`flex max-w-[90%] md:max-w-[80%] ${isBot ? 'flex-row' : 'flex-row-reverse'}`}>
+      <div className={`flex max-w-[95%] md:max-w-[85%] ${isBot ? 'flex-row' : 'flex-row-reverse'}`}>
         
         {/* Avatar */}
         <div className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center mt-1 ${isBot ? 'bg-red-600 text-white mr-2' : 'bg-gray-200 ml-2'}`}>
@@ -121,6 +139,7 @@ export default function CeecoChatbot() {
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [step, setStep] = useState(0); 
+  const [isAiMode, setIsAiMode] = useState(false); 
   
   const [userData, setUserData] = useState({
     name: "",
@@ -135,7 +154,10 @@ export default function CeecoChatbot() {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const timer = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+    return () => clearTimeout(timer);
   }, [messages, isTyping]);
 
   useEffect(() => {
@@ -155,23 +177,73 @@ export default function CeecoChatbot() {
     setMessages(prev => [...prev, { sender: 'user', text }]);
   };
 
-  const handleSendMessage = () => {
+  // --- GEMINI API INTEGRATION ---
+  const callGemini = async (prompt) => {
+    setIsTyping(true);
+    try {
+      const apiKey = ""; // Runtime provided
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Details currently unavailable.";
+    } catch (e) {
+      console.error(e);
+      return "I'm having trouble connecting to the university database right now.";
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
     if (!userInput.trim()) return;
     const text = userInput;
     setUserInput("");
     addUserMessage(text);
-    processUserResponse(text);
+
+    if (isAiMode) {
+        const response = await callGemini(`You are Ceeco AI, a friendly and expert study abroad counselor for Ceeco International in Kerala. 
+        User Question: "${text}"
+        Context: User is interested in MBBS abroad. Current selected country: ${userData.country || "Not selected yet"}.
+        Answer briefly and helpfully.`);
+        addBotMessage(response);
+    } else {
+        processUserResponse(text);
+    }
   };
 
-  // Global Back Button (in input area)
+  const toggleAiMode = () => {
+      if (isAiMode) {
+          setIsAiMode(false);
+          addBotMessage("Exiting AI Counselor mode. Let's continue with your application.");
+      } else {
+          setIsAiMode(true);
+          addBotMessage("✨ AI Counselor Mode Activated!\n\nI am now connected to my advanced knowledge base. Ask me anything about studying MBBS abroad.");
+      }
+  };
+
+  // Global Back Button Logic
   const handleBack = () => {
-    if (step === 3) { 
+    if (step === 2) {
+        setStep(1);
+        addBotMessage("Okay, let's start over. May I know your name?");
+    } else if (step === 3) { 
         triggerBudgetReset();
     } else if (step === 4) { 
         triggerCountryReset();
     } else if (step === 5) {
-        setStep(4);
-        addBotMessage("Going back to the university list.");
+        addBotMessage("Going back to the university list...");
+        handleCountrySelect(userData.country, userData.budgetSlab);
+    } else if (step === 6) {
+        setStep(5);
+        addBotMessage("Okay, please re-enter your phone number.");
+    } else if (step === 7) {
+        setStep(6);
+        addBotMessage("Going back to city selection.");
     }
   };
 
@@ -184,9 +256,10 @@ export default function CeecoChatbot() {
     const slab = slabToUse || userData.budgetSlab; 
     setStep(3);
     
+    const targetSlab = normalize(slab);
     const validCountries = Array.from(new Set(
         universityDatabase
-          .filter(u => u.slab === slab)
+          .filter(u => normalize(u.slab) === targetSlab)
           .map(u => u.country)
     ));
 
@@ -196,9 +269,13 @@ export default function CeecoChatbot() {
             <button 
               key={c} 
               onClick={() => handleCountrySelect(c, slab)}
-              className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-full shadow-sm hover:bg-red-50 hover:border-red-400 transition-all flex items-center"
+              className="bg-red-100 border border-red-200 text-red-800 font-bold py-2 px-4 rounded-full shadow-sm hover:bg-red-200 transition-all flex items-center"
             >
-              <MapPin size={14} className="mr-1" /> {c}
+              <img 
+                src={`https://flagcdn.com/48x36/${countryCodes[c]}.png`} 
+                alt={c} 
+                className="w-6 h-4 object-cover rounded-sm shadow-sm mr-2"
+              /> {c}
             </button>
           ))}
           <button 
@@ -250,37 +327,54 @@ export default function CeecoChatbot() {
   };
 
   const handleBudgetSelect = (slab) => {
-    setUserData({ ...userData, budgetSlab: slab });
-    addUserMessage(slab);
+    const cleanedSlab = slab.trim(); 
+    setUserData({ ...userData, budgetSlab: cleanedSlab });
+    addUserMessage(cleanedSlab);
     setStep(3);
 
+    const targetSlab = normalize(slab);
     const validCountries = Array.from(new Set(
         universityDatabase
-          .filter(u => u.slab === slab)
+          .filter(u => normalize(u.slab) === targetSlab) 
           .map(u => u.country)
     ));
     
-    if (validCountries.length === 0) {
-      addBotMessage(`I currently don't have specific universities listed for the exact budget of ${slab}.`);
-      setStep(2);
+    if (!validCountries || validCountries.length === 0) {
+      addBotMessage(
+        `I noticed there are no specific universities listed exactly for ${slab} in my current database, but we definitely have options!\n\nPlease try selecting a different budget range or contact our counselor directly.`,
+        <div className="mt-3">
+             <button 
+                onClick={triggerBudgetReset} 
+                className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center border border-gray-300 shadow-sm"
+              >
+                <Edit2 size={14} className="mr-2" /> Select Different Budget
+              </button>
+        </div>
+      );
     } else {
-      addBotMessage("Based on your budget, here are the best countries for you:", 
-        <div className="flex flex-wrap gap-2 mt-3">
+      addBotMessage("Based on your budget, first select a country:", 
+        <div className="flex flex-wrap gap-2 mt-3 w-full">
           {validCountries.map(c => (
             <button 
               key={c} 
-              onClick={() => handleCountrySelect(c, slab)}
-              className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-full shadow-sm hover:bg-red-50 hover:border-red-400 transition-all flex items-center"
+              onClick={() => handleCountrySelect(c, cleanedSlab)}
+              className="bg-red-100 border border-red-200 text-red-800 font-bold py-2 px-4 rounded-full shadow-sm hover:bg-red-200 transition-all flex items-center mb-2"
             >
-              <MapPin size={14} className="mr-1" /> {c}
+              <img 
+                src={`https://flagcdn.com/48x36/${countryCodes[c]}.png`} 
+                alt={c} 
+                className="w-6 h-4 object-cover rounded-sm shadow-sm mr-2"
+              /> {c}
             </button>
           ))}
-          <button 
-            onClick={triggerBudgetReset} 
-            className="w-full mt-4 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center border border-gray-300 shadow-sm"
-          >
-            <Edit2 size={14} className="mr-2" /> Change Budget
-          </button>
+          <div className="w-full pt-2">
+            <button 
+                onClick={triggerBudgetReset} 
+                className="w-full mt-2 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center border border-gray-300 shadow-sm"
+            >
+                <Edit2 size={14} className="mr-2" /> Change Budget
+            </button>
+          </div>
         </div>
       );
     }
@@ -290,53 +384,98 @@ export default function CeecoChatbot() {
     setUserData({ ...userData, country: country });
     setStep(4);
     
-    const universities = universityDatabase.filter(u => u.country === country && u.slab === slab);
+    const targetSlab = normalize(slab);
+    const universities = universityDatabase.filter(u => u.country === country && normalize(u.slab) === targetSlab);
     
     setIsTyping(true);
     setTimeout(() => {
         setIsTyping(false);
-        addBotMessage(`Here are the top universities in ${country} for the budget ${slab}:`, 
-            <div className="space-y-4 mt-3 w-full">
-                {universities.map(uni => (
-                    <div key={uni.id} className="bg-white border-l-4 border-red-600 rounded-r-xl shadow-md p-4 text-left relative overflow-hidden">
-                        <h3 className="font-bold text-lg text-gray-800 mb-2">{uni.name}</h3>
-                        <div className="text-sm text-gray-600 space-y-1">
-                            <p className="flex items-center"><MapPin size={14} className="mr-2 text-red-500" /> {uni.country}</p>
-                            <p className="flex items-center">
-                                <DollarSign size={14} className="mr-2 text-green-600" /> 
-                                Tuition: {uni.fees} {uni.currency} / Year
-                            </p>
-                            <p className="flex items-center font-semibold text-gray-800">
-                                <Wallet size={14} className="mr-2 text-orange-500" /> 
-                                Total Budget: ₹{uni.slab}
-                            </p>
-                            <p className="flex items-center"><Briefcase size={14} className="mr-2 text-blue-500" /> Medium: {uni.medium}</p>
-                            <p className="flex items-center"><GraduationCap size={14} className="mr-2 text-purple-500" /> Total Duration: {uni.duration} Years</p>
+        addBotMessage(
+            <span className="font-semibold text-gray-800">
+               Here are the <span className="text-red-600 font-bold">Top Recommended Universities</span> in {country}:
+            </span>, 
+            <div className="space-y-4 mt-4 w-full flex flex-col items-center">
+                {universities.length > 0 ? universities.map(uni => (
+                    <div key={uni.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden mb-3 w-full max-w-sm transform transition-all hover:scale-[1.02]">
+                        {/* Header */}
+                        <div className="bg-red-50 p-4 text-center border-b border-red-100 relative">
+                            <h3 className="font-bold text-lg text-gray-900 leading-tight mb-1">{uni.name}</h3>
+                            <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                                <img 
+                                    src={`https://flagcdn.com/48x36/${countryCodes[uni.country]}.png`} 
+                                    alt={uni.country} 
+                                    className="w-6 h-4 object-cover rounded-sm shadow-sm"
+                                />
+                                <span className="font-medium uppercase tracking-wide text-xs">{uni.country}</span>
+                            </div>
                         </div>
-                        <button 
-                           onClick={() => handleSelectUni(uni)}
-                           className="mt-3 w-full bg-red-50 text-red-700 py-2 rounded-lg text-sm font-semibold hover:bg-red-600 hover:text-white transition-colors"
-                        >
-                            Enquire Now
-                        </button>
+
+                        {/* Details Grid (Total Budget Removed) */}
+                        <div className="p-4 grid grid-cols-2 gap-4 text-sm bg-white">
+                            <div className="flex flex-col items-center text-center">
+                                <GraduationCap className="text-red-500 mb-1" size={20} />
+                                <span className="text-[10px] text-gray-400 uppercase font-semibold">Duration</span>
+                                <span className="font-bold text-gray-800">{uni.duration} Years</span>
+                            </div>
+                            <div className="flex flex-col items-center text-center">
+                                <DollarSign className="text-red-500 mb-1" size={20} />
+                                <span className="text-[10px] text-gray-400 uppercase font-semibold">Tuition Fee</span>
+                                <span className="font-bold text-gray-800">{uni.fees} {uni.currency}/yr</span>
+                            </div>
+                            <div className="flex flex-col items-center text-center col-span-2">
+                                <Briefcase className="text-red-500 mb-1" size={20} />
+                                <span className="text-[10px] text-gray-400 uppercase font-semibold">Medium</span>
+                                <span className="font-bold text-gray-800">{uni.medium}</span>
+                            </div>
+                        </div>
+
+                        {/* CTA */}
+                        <div className="p-4 pt-0">
+                            <button
+                                onClick={() => handleSelectUni(uni)}
+                                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all transform active:scale-95 flex items-center justify-center"
+                            >
+                                Get More Details
+                            </button>
+                        </div>
                     </div>
-                ))}
+                )) : (
+                    <div className="text-center p-4 bg-gray-100 rounded-xl text-gray-500 text-sm w-full">
+                        No universities found matching exactly this criteria.
+                    </div>
+                )}
                 
                 <button 
                   onClick={() => triggerCountryReset(slab)}
-                  className="w-full flex items-center justify-center py-2 text-gray-500 text-sm hover:text-gray-800"
+                  className="w-full max-w-sm flex items-center justify-center py-3 text-gray-500 text-sm hover:text-gray-800 font-medium bg-gray-50 rounded-xl mt-2"
                 >
-                  <RefreshCcw size={14} className="mr-1" /> Search Different Country
+                  <RefreshCcw size={14} className="mr-2" /> Search Different Country
                 </button>
             </div>
         );
     }, 1000);
   };
 
-  const handleSelectUni = (uni) => {
+  // --- LLM GENERATION FOR SELECTED UNIVERSITY ---
+  const handleSelectUni = async (uni) => {
     setUserData({ ...userData, selectedUni: uni });
     setStep(5);
-    addBotMessage(`Excellent choice! ${uni.name} is a prestigious institution.\n\nTo check your eligibility and send you the brochure, please share your phone number.`);
+    
+    setIsTyping(true);
+    // Call Gemini to generate the specific description
+    const description = await callGemini(
+        `Write a short, professional description for ${uni.name} located in ${uni.country}. 
+        It should match this format exactly: 
+        "${uni.name} is a public/private university in [City], ${uni.country}. The university offers various programs including MBBS. The MBBS program is ${uni.duration} years long and taught in English. It is accredited by the National Medical Commission (NMC) of India and the World Health Organization (WHO)." 
+        Do not add any other introductory text.`
+    );
+    
+    addBotMessage(description);
+    
+    // Follow up message after delay
+    setTimeout(() => {
+        addBotMessage("To check your eligibility and receive the official brochure, please share your **Phone Number**.");
+    }, 1500);
   };
 
   const handleEducationSelect = (status) => {
@@ -347,7 +486,19 @@ export default function CeecoChatbot() {
     setTimeout(() => {
         setIsTyping(false);
         setStep(8);
-        addBotMessage("Thank you! 🌟\n\nYou are eligible for **FREE Counseling** from our experts.\n\nOur team will contact you shortly on your number to answer all your doubts regarding certificate value and admission process.\n\nHave a great day! ❤️");
+        addBotMessage(
+            "Thank you! 🌟\n\nYou are eligible for **FREE Counseling** from our experts.\n\nOur team will contact you shortly on your number to answer all your doubts regarding certificate value and admission process.\n\nHave a great day! ❤️",
+            <div className="mt-3">
+               <a 
+                 href="https://wa.me/918137878027" 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-xl text-sm font-bold transition-all shadow-sm w-full sm:w-auto"
+               >
+                 <MessageCircle size={18} /> Chat With US
+               </a>
+            </div>
+        );
     }, 1000);
   };
 
@@ -363,8 +514,14 @@ export default function CeecoChatbot() {
             <p className="text-xs text-red-100 opacity-90">MBBS Study Abroad Expert</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 bg-red-800 bg-opacity-50 px-2 py-1 rounded text-[10px] font-medium">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Online
+        
+        <div className="flex items-center gap-3">
+            <a href="tel:+918137878027" className="bg-white text-red-600 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center hover:bg-red-50 transition-colors">
+                <Phone size={14} className="mr-1" /> Call Now
+            </a>
+            <div className="flex items-center gap-1 bg-red-800 bg-opacity-50 px-2 py-1 rounded text-[10px] font-medium">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Online
+            </div>
         </div>
       </header>
 
@@ -377,7 +534,7 @@ export default function CeecoChatbot() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-lg z-20">
-        {step === 2 && (
+        {step === 2 && !isAiMode && (
           <div className="flex flex-wrap gap-2 mb-3 justify-center max-h-[30vh] overflow-y-auto">
              {DYNAMIC_SLABS.map((slab) => (
                  <button 
@@ -391,7 +548,7 @@ export default function CeecoChatbot() {
           </div>
         )}
 
-        {step === 7 && (
+        {step === 7 && !isAiMode && (
           <div className="flex flex-wrap gap-2 mb-3 justify-center">
             {["10th", "11th", "12th pursuing", "Neet Preparation"].map(s => (
               <button key={s} onClick={() => handleEducationSelect(s)} 
@@ -402,27 +559,39 @@ export default function CeecoChatbot() {
           </div>
         )}
 
-        <div className="flex items-center gap-2">
-           {step > 1 && step < 8 && step !== 3 && step !== 4 && (
-             <button onClick={handleBack} className="p-3 text-gray-500 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} /></button>
-           )}
+        <div className="flex flex-col gap-2">
+            <div className="flex justify-end">
+                <button 
+                    onClick={toggleAiMode}
+                    className={`text-xs font-bold px-3 py-1 rounded-full flex items-center transition-all ${isAiMode ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-200'}`}
+                >
+                    {isAiMode ? <X size={12} className="mr-1" /> : <Sparkles size={12} className="mr-1" />}
+                    {isAiMode ? "Exit AI Chat" : "Ask AI Counselor"}
+                </button>
+            </div>
 
-          <input
-            type="text"
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder={step === 5 ? "Enter Phone Number..." : (step === 6 ? "Enter City..." : "Type here...")}
-            disabled={step === 2 || step === 3 || step === 4 || step === 7 || step === 8} 
-            className="flex-1 bg-gray-100 text-gray-800 rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 border-none text-sm"
-          />
-          <button 
-            onClick={handleSendMessage}
-            disabled={!userInput.trim()}
-            className={`p-3 rounded-full text-white shadow-lg transition-transform transform active:scale-95 ${userInput.trim() ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-300 cursor-not-allowed'}`}
-          >
-            <Send size={20} />
-          </button>
+            <div className="flex items-center gap-2">
+                {step > 1 && step < 8 && step !== 3 && step !== 4 && !isAiMode && (
+                    <button onClick={handleBack} className="p-3 text-gray-500 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} /></button>
+                )}
+
+                <input
+                    type="text"
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder={isAiMode ? "✨ Ask me anything..." : (step === 5 ? "Enter Phone Number..." : (step === 6 ? "Enter City..." : "Type here..."))}
+                    disabled={!isAiMode && (step === 2 || step === 3 || step === 4 || step === 7 || step === 8)} 
+                    className={`flex-1 rounded-full px-5 py-3 focus:outline-none focus:ring-2 border-none text-sm transition-all ${isAiMode ? 'bg-indigo-50 focus:ring-indigo-500 text-indigo-900 placeholder-indigo-400' : 'bg-gray-100 text-gray-800 focus:ring-red-500'}`}
+                />
+                <button 
+                    onClick={handleSendMessage}
+                    disabled={!userInput.trim()}
+                    className={`p-3 rounded-full text-white shadow-lg transition-transform transform active:scale-95 ${userInput.trim() ? (isAiMode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-red-600 hover:bg-red-700') : 'bg-gray-300 cursor-not-allowed'}`}
+                >
+                    <Send size={20} />
+                </button>
+            </div>
         </div>
         
         <div className="text-center mt-2">
