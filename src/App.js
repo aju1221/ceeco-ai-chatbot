@@ -97,9 +97,9 @@ const countryCodes = {
 // --- HELPER FUNCTIONS ---
 const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
 
-// --- STATIC DESCRIPTIONS (UPDATED FROM USER - COMPLETE) ---
+// --- STATIC DESCRIPTIONS ---
 const universityDescriptions = {
-  // GEORGIA
+  // (Keeping all descriptions from previous version)
   "Caucasus University": "Caucasus University, located in Tbilisi, offers a 6-year English-medium MD program recognized by WHO, ECFMG (USA), NMC India, and listed in World Directory of Medical Schools (WDMS). The American-style curriculum prepares students for USMLE, PLAB, and FMGE with a passing rate above 60% in recent years. Modern simulation labs and affiliated multi-profile hospitals ensure strong clinical exposure from the 3rd year.",
   "Tbilisi State Medical University (American Curriculum)": "The top-ranked and oldest medical university in Georgia (founded 1918). The 6-year US-modeled MD program is recognized worldwide (WHO, ECFMG, NMC, GMC-UK). Graduates are eligible for USMLE (Step 1 & 2 from 1st year), PLAB, FMGE (highest success rate in Georgia), and direct residency in the USA/Canada/Europe. Over 85% Indian students clear FMGE in first attempt.",
   "Tbilisi State Medical University (European Curriculum)": "The same prestigious TSMU with a 6-year European-standard English-medium program. Fully compliant with EU directives; graduates can practice across Europe after licensing exams. Recognized by WHO, NMC India, ECFMG, and WDMS. Excellent preparation for FMGE, PLAB, and European licensing exams.",
@@ -202,7 +202,12 @@ const ChatMessage = ({ msg }) => {
             ? 'bg-white border border-red-100 text-gray-800 rounded-tl-none' 
             : 'bg-red-600 text-white rounded-tr-none'
         }`}>
-          {msg.text && <div className="whitespace-pre-line leading-relaxed">{msg.text}</div>}
+          {/* Check if msg.text is a string to apply whitespace styling, otherwise render as is */}
+          {msg.text && (
+            typeof msg.text === 'string' 
+              ? <div className="whitespace-pre-line leading-relaxed">{msg.text}</div>
+              : <div className="leading-relaxed">{msg.text}</div>
+          )}
           {msg.customRender}
         </div>
       </div>
@@ -217,7 +222,6 @@ export default function CeecoChatbot() {
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [step, setStep] = useState(0); 
-  const [isAiMode, setIsAiMode] = useState(false); 
   
   const [userData, setUserData] = useState({
     name: "",
@@ -226,7 +230,8 @@ export default function CeecoChatbot() {
     selectedUni: null,
     phone: "",
     city: "",
-    education: ""
+    education: "",
+    userType: "" // 'student' or 'parent'
   });
   
   const messagesEndRef = useRef(null);
@@ -239,8 +244,24 @@ export default function CeecoChatbot() {
   }, [messages, isTyping]);
 
   useEffect(() => {
-    addBotMessage("Namaskaram! 🙏 Welcome to Ceeco International.\n\nI am Ceeco AI, your personal MBBS study abroad assistant. I'm here to help you find the perfect university.\n\nMay I know your name, please?");
-    setStep(1);
+    addBotMessage(
+      "Namaskaram! 🙏 Welcome to Ceeco International.\n\nI am Ceeco AI, your personal MBBS study abroad assistant. I'm here to help you find the perfect university.\n\nOne quick question before we start: Are you a parent or a student?",
+      <div className="flex flex-wrap gap-2 mt-3">
+         <button 
+           onClick={() => handleUserTypeSelect('student')} 
+           className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-lg text-sm hover:bg-red-50 hover:border-red-400 transition-all flex-grow"
+         >
+           I am a Student
+         </button>
+         <button 
+           onClick={() => handleUserTypeSelect('parent')} 
+           className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-lg text-sm hover:bg-red-50 hover:border-red-400 transition-all flex-grow"
+         >
+           I am a Parent
+         </button>
+      </div>
+    );
+    setStep(0); // Step 0 is now Role Selection
   }, []);
 
   const addBotMessage = (text, customRender = null) => {
@@ -255,50 +276,31 @@ export default function CeecoChatbot() {
     setMessages(prev => [...prev, { sender: 'user', text }]);
   };
 
-  // --- GEMINI API INTEGRATION ---
-  const callGemini = async (prompt) => {
-    setIsTyping(true);
-    try {
-      const apiKey = ""; // Runtime provided
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-      const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Details currently unavailable.";
-    } catch (e) {
-      console.error(e);
-      return "I'm having trouble connecting to the university database right now.";
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (!userInput.trim()) return;
     const text = userInput;
     setUserInput("");
     addUserMessage(text);
-
-    if (isAiMode) {
-        const response = await callGemini(`You are Ceeco AI, a friendly and expert study abroad counselor for Ceeco International in Kerala. 
-        User Question: "${text}"
-        Context: User is interested in MBBS abroad. Current selected country: ${userData.country || "Not selected yet"}.
-        Answer briefly and helpfully.`);
-        addBotMessage(response);
-    } else {
-        processUserResponse(text);
-    }
+    processUserResponse(text);
   };
 
-  // Global Back Button Logic
+  // Global Back Button Logic - UPDATED for new flow
   const handleBack = () => {
-    if (step === 2) {
+    if (step === 1) {
+        // Back from Name -> Role (Step 0)
+        setStep(0);
+        setMessages([]); // Clear messages to restart effectively or just add the role question again
+        addBotMessage(
+          "Let's go back. Are you a parent or a student?",
+          <div className="flex flex-wrap gap-2 mt-3">
+             <button onClick={() => handleUserTypeSelect('student')} className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-lg text-sm hover:bg-red-50 hover:border-red-400 transition-all flex-grow">I am a Student</button>
+             <button onClick={() => handleUserTypeSelect('parent')} className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-lg text-sm hover:bg-red-50 hover:border-red-400 transition-all flex-grow">I am a Parent</button>
+          </div>
+        );
+    } else if (step === 2) {
+        // Back from Budget -> Name
         setStep(1);
-        addBotMessage("Okay, let's start over. May I know your name?");
+        addBotMessage("Okay, let's re-enter your name. May I know your name?");
     } else if (step === 3) { 
         triggerBudgetReset();
     } else if (step === 4) { 
@@ -312,6 +314,9 @@ export default function CeecoChatbot() {
     } else if (step === 7) {
         setStep(6);
         addBotMessage("Going back to city selection.");
+    } else if (step === 9) { // Final Step -> Education
+        setStep(7);
+        addBotMessage("Okay, please re-select your educational status.");
     }
   };
 
@@ -371,15 +376,24 @@ export default function CeecoChatbot() {
   const processUserResponse = (text) => {
     const lowerText = text.toLowerCase().trim();
 
+    // STEP 0: Role Selection (Handled by buttons mostly, but if they type)
+    if (step === 0) {
+        if (lowerText.includes("student")) handleUserTypeSelect('student');
+        else if (lowerText.includes("parent")) handleUserTypeSelect('parent');
+        else addBotMessage("Please select whether you are a Student or a Parent using the buttons above.");
+        return;
+    }
+
+    // STEP 1: Name
     if (step === 1) {
       if (GREETINGS.includes(lowerText)) {
         addBotMessage("Hello! 👋 Please tell me your actual name so I can address you properly.");
         return;
       }
-      setUserData({ ...userData, name: text });
+      setUserData(prev => ({ ...prev, name: text }));
       setStep(2);
       addBotMessage(
-        `Nice to meet you, ${text}! 😊\n\nWhat is your approximate Total Course Budget in INR?`,
+        `Nice to meet you, ${text}! 😊\n\nPlease select your total tuition fee budget in INR`,
         <div className="flex flex-wrap gap-2 mt-3">
              {DYNAMIC_SLABS.map((slab) => (
                  <button 
@@ -405,23 +419,45 @@ export default function CeecoChatbot() {
         addBotMessage("❌ That doesn't look like a valid phone number.\n\nPlease share a valid 10-digit mobile number or include your country code.");
         return;
       }
-      setUserData({ ...userData, phone: text });
+      setUserData(prev => ({ ...prev, phone: text }));
       setStep(6);
       addBotMessage("Thank you! ✅\n\nWhich city are you currently located in?");
       return;
     }
 
     if (step === 6) {
-      setUserData({ ...userData, city: text });
+      setUserData(prev => ({ ...prev, city: text }));
       setStep(7);
-      addBotMessage("Noted. And finally, what is your current educational status?");
+      // Automatically show education options
+      addBotMessage(
+          "Noted. And finally, what is your current educational status?",
+          <div className="flex flex-wrap gap-2 mt-3">
+            {["10th", "11th", "12th pursuing", "Neet Preparation"].map(s => (
+              <button key={s} onClick={() => handleEducationSelect(s)} 
+                className="bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-lg text-xs font-medium hover:bg-red-600 hover:text-white transition-all flex-grow">
+                {s}
+              </button>
+            ))}
+          </div>
+      );
       return;
     }
   };
 
+  const handleUserTypeSelect = (type) => {
+      setUserData(prev => ({ ...prev, userType: type }));
+      addUserMessage(type === 'student' ? "I am a Student" : "I am a Parent");
+      setIsTyping(true);
+      setTimeout(() => {
+          setIsTyping(false);
+          setStep(1);
+          addBotMessage("Great! May I know your name, please?");
+      }, 600);
+  };
+
   const handleBudgetSelect = (slab) => {
     const cleanedSlab = slab.trim(); 
-    setUserData({ ...userData, budgetSlab: cleanedSlab });
+    setUserData(prev => ({ ...prev, budgetSlab: cleanedSlab }));
     addUserMessage(cleanedSlab);
     setStep(3);
 
@@ -445,7 +481,7 @@ export default function CeecoChatbot() {
         </div>
       );
     } else {
-      addBotMessage("Based on your budget, first select a country:", 
+      addBotMessage("These are the destinations based on your budget. Please select a country:", 
         <div className="flex flex-wrap gap-2 mt-3 w-full">
           {validCountries.map(c => (
             <button 
@@ -474,7 +510,7 @@ export default function CeecoChatbot() {
   };
 
   const handleCountrySelect = (country, slab) => {
-    setUserData({ ...userData, country: country });
+    setUserData(prev => ({ ...prev, country: country }));
     setStep(4);
     
     const targetSlab = normalize(slab);
@@ -551,24 +587,21 @@ export default function CeecoChatbot() {
 
   // --- SHOW DESCRIPTION FROM STATIC DATA ---
   const handleSelectUni = (uni) => {
-    setUserData({ ...userData, selectedUni: uni });
+    setUserData(prev => ({ ...prev, selectedUni: uni }));
     setStep(5);
     
     setIsTyping(true);
     
     setTimeout(() => {
         setIsTyping(false);
-        // Look up the static description or fall back to shared/generated
         let description = universityDescriptions[uni.name] || SHARED_DESCRIPTIONS[uni.country];
         
-        // If still no description (fallback logic), use a safe default
         if (!description) {
             description = `${uni.name} is a prestigious medical university in ${uni.country}. It offers a ${uni.duration}-year ${uni.medium}-medium program recognized by the WHO and NMC.`;
         }
 
         addBotMessage(description);
         
-        // Follow up message after delay
         setTimeout(() => {
             addBotMessage("To check your eligibility and receive the official brochure, please share your **Phone Number**.");
         }, 1500);
@@ -576,18 +609,18 @@ export default function CeecoChatbot() {
   };
 
   const handleEducationSelect = (status) => {
-    setUserData({ ...userData, education: status });
+    setUserData(prev => ({ ...prev, education: status }));
     addUserMessage(status);
     
     setIsTyping(true);
     setTimeout(() => {
         setIsTyping(false);
-        setStep(8);
+        setStep(9); // End
         addBotMessage(
             <div className="space-y-2">
               <p>Thank you! 🌟</p>
               <p>You are eligible for **FREE Counseling** from our experts.</p>
-              <p>Our team will contact you shortly on your number to answer all your doubts regarding certificate value and admission process.</p>
+              <p>Our team will contact you shortly on your number to answer all your doubts regarding the admission process.</p>
               <p className="font-bold text-red-600 mt-4 text-lg animate-pulse">skip the waiting and contact us now!!</p>
               <p>Have a great day! ❤️</p>
             </div>,
@@ -611,7 +644,8 @@ export default function CeecoChatbot() {
       <header className="bg-gradient-to-r from-red-700 to-red-600 text-white p-4 shadow-lg flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center space-x-2">
           <div className="bg-white p-1 rounded-full">
-             <School className="text-red-600" size={20} />
+             <img src="https://ceecointernational.com/wp-content/uploads/2025/11/cecco.png" alt="Ceeco Logo" className="w-8 h-8 object-contain" onError={(e) => {e.target.onerror = null; e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
+             <School className="text-red-600 hidden" size={20} />
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-wide">Ceeco AI</h1>
@@ -619,7 +653,6 @@ export default function CeecoChatbot() {
           </div>
         </div>
         
-        {/* Call Button & Status */}
         <div className="flex items-center gap-3">
             <a href="tel:+918137878027" className="bg-white text-red-600 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center hover:bg-red-50 transition-colors">
                 <Phone size={14} className="mr-1" /> Call Now
@@ -640,19 +673,8 @@ export default function CeecoChatbot() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-lg z-20">
         
-        {step === 7 && (
-          <div className="flex flex-wrap gap-2 mb-3 justify-center">
-            {["10th", "11th", "12th pursuing", "Neet Preparation"].map(s => (
-              <button key={s} onClick={() => handleEducationSelect(s)} 
-                className="bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-lg text-xs font-medium hover:bg-red-600 hover:text-white transition-all">
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-
         <div className="flex items-center gap-2">
-           {step > 1 && step < 8 && step !== 3 && step !== 4 && (
+           {step > 0 && step < 9 && step !== 3 && step !== 4 && step !== 7 && (
              <button onClick={handleBack} className="p-3 text-gray-500 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} /></button>
            )}
 
@@ -662,7 +684,7 @@ export default function CeecoChatbot() {
             onChange={(e) => setUserInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             placeholder={step === 5 ? "Enter Phone Number..." : (step === 6 ? "Enter City..." : "Type here...")}
-            disabled={step === 2 || step === 3 || step === 4 || step === 7 || step === 8} 
+            disabled={step === 0 || step === 2 || step === 3 || step === 4 || step === 7 || step === 8 || step === 9} 
             className="flex-1 bg-gray-100 text-gray-800 rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 border-none text-sm"
           />
           <button 
