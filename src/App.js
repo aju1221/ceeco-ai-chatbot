@@ -71,6 +71,33 @@ const universityDatabase = [
   { id: 'az1', country: "Azerbaijan", name: "Azerbaijan Medical University", fees: "6750", currency: "USD", duration: "6", medium: "English", slab: "35-40 Lakhs" },
 ];
 
+// --- STATIC DESCRIPTIONS (UPDATED FROM USER) ---
+const universityDescriptions = {
+  "Caucasus University": "Caucasus University, located in Tbilisi, offers a 6-year English-medium MD program recognized by WHO, ECFMG (USA), NMC India, and listed in World Directory of Medical Schools (WDMS). The American-style curriculum prepares students for USMLE, PLAB, and FMGE with a passing rate above 60% in recent years. Modern simulation labs and affiliated multi-profile hospitals ensure strong clinical exposure from the 3rd year.",
+  "Tbilisi State Medical University (American Curriculum)": "The top-ranked and oldest medical university in Georgia (founded 1918). The 6-year US-modeled MD program is recognized worldwide (WHO, ECFMG, NMC, GMC-UK). Graduates are eligible for USMLE (Step 1 & 2 from 1st year), PLAB, FMGE (highest success rate in Georgia), and direct residency in the USA/Canada/Europe. Over 85% Indian students clear FMGE in first attempt.",
+  "Tbilisi State Medical University (European Curriculum)": "The same prestigious TSMU with a 6-year European-standard English-medium program. Fully compliant with EU directives; graduates can practice across Europe after licensing exams. Recognized by WHO, NMC India, ECFMG, and WDMS. Excellent preparation for FMGE, PLAB, and European licensing exams.",
+  "Tbilisi Medical Academy": "Founded by renowned physician Petre Shotadze, TMA offers a student-centric 6-year English MD program recognized by WHO, NMC India, ECFMG, and WDMS. Early clinical exposure from year 2, modern simulation center, and strong FMGE results make it a favorite among Indian students.",
+  "University of Georgia": "One of the largest private universities in Georgia offering a British-style 6-year MD program in English. Recognized by WHO, NMC, ECFMG, GMC (UK), and WDMS. Graduates are eligible for PLAB, USMLE, FMGE, and practice in India, UK, USA, Australia, and Middle East after respective licensing exams.",
+  "European University": "A rapidly growing institution in Tbilisi with a 6-year English-medium MD program recognized by WHO, NMC India, ECFMG, and WDMS. Modern campus, affordable fees, and strong clinical rotations in leading hospitals. High FMGE success rate and increasing popularity among Indian students.",
+  "Alte University": "A modern private university offering a high-quality, affordable 6-year English MD program. Recognized by WHO, NMC, ECFMG, and WDMS. New simulation labs and direct hospital partnerships provide excellent hands-on training. Eligible for FMGE, USMLE, PLAB.",
+  "Georgian National University SEU": "One of the largest private universities in Georgia with a well-structured 6-year English-medium MD program. Fully recognized by WHO, NMC India, ECFMG, and WDMS. Strong focus on research and clinical skills; graduates eligible for FMGE, USMLE, and global practice.",
+  "International Black Sea University": "Offers an American-style 6-year English MD program recognized by WHO, NMC, ECFMG, and WDMS. Multicultural campus and affordable fees with solid clinical training. Graduates can appear for USMLE, FMGE, and other licensing exams worldwide.",
+  "East West University": "One of the most budget-friendly yet quality-focused universities in Georgia. 6-year English-medium MD program recognized by WHO, NMC India, ECFMG, and WDMS. Large Indian student community and excellent FMGE coaching support.",
+  "University of Traditional Medicine": "Government-recognized university in Armenia offering a unique 6-year English-medium MD program combining allopathic and traditional medicine. Recognized by WHO, NMC India, and WDMS. Affordable fees and strong clinical base.",
+  "University of Debrecen": "One of Europe’s oldest (1538) and highest-ranked medical universities in Hungary. 6-year English-medium MD program recognized by WHO, ECFMG, GMC (UK), NMC India, and all EU countries. Excellent preparation for USMLE, PLAB, and European exams.",
+  "Nicolae Testemitanu State University": "The leading medical university of Moldova offering 6-year English-medium programs. Recognized by WHO, NMC India, ECFMG, and European countries. Low fees with solid clinical training.",
+  "Caspian International School of Medicine": "Modern private university in Almaty, Kazakhstan offering affordable 6-year English-medium MBBS. Recognized by WHO, NMC India, and WDMS. Growing Indian student base.",
+  "Azerbaijan Medical University": "The premier government medical university in Baku, Azerbaijan. 6-year English-medium program recognized by WHO, NMC India, ECFMG, and WDMS. Modern infrastructure and strong clinical training."
+};
+
+const SHARED_DESCRIPTIONS = {
+  "Uzbekistan": "Government universities offering highly affordable 6-year English-medium MBBS programs. Recognized by WHO, NMC India, PMDC, and WDMS. Graduates eligible for FMGE, USMLE, PLAB, and practice in India, Gulf countries, and worldwide. Very high FMGE passing percentage.",
+  "Russia": "Prestigious Russian government medical universities offering 6-year English-medium MD programs. Recognized by WHO, NMC India, ECFMG, and WDMS. Graduates can practice in India (after FMGE), USA (USMLE), UK (PLAB), Australia, and Europe. Strong clinical training in large university hospitals and excellent FMGE results.",
+  "Egypt": "Among the oldest and most reputed medical universities in the Middle East. 7-year English-medium programs (including internship) recognized by WHO, NMC India, ECFMG, and Arab Board. Massive patient flow ensures unmatched clinical exposure. Graduates eligible for FMGE, USMLE, PLAB, and practice worldwide.",
+  "Bulgaria": "Top European medical universities offering 6-year English-medium MD programs fully recognized across the EU, UK, USA (after USMLE), India (after FMGE), and worldwide. Graduates receive an EU degree valid in all European countries.",
+  "Kyrgyzstan": "Government universities offering low-cost, WHO & NMC-recognized 6-year English-medium MBBS programs. Large Indian communities and dedicated FMGE coaching."
+};
+
 const DYNAMIC_SLABS = [...new Set(universityDatabase.map(u => u.slab))].sort((a, b) => {
     const numA = parseInt(a.split('-')[0]);
     const numB = parseInt(b.split('-')[0]);
@@ -410,7 +437,7 @@ export default function CeecoChatbot() {
                             </div>
                         </div>
 
-                        {/* Details Grid (Total Budget Removed) */}
+                        {/* Details Grid */}
                         <div className="p-4 grid grid-cols-2 gap-4 text-sm bg-white">
                             <div className="flex flex-col items-center text-center">
                                 <GraduationCap className="text-red-500 mb-1" size={20} />
@@ -456,26 +483,30 @@ export default function CeecoChatbot() {
     }, 1000);
   };
 
-  // --- LLM GENERATION FOR SELECTED UNIVERSITY ---
-  const handleSelectUni = async (uni) => {
+  // --- SHOW DESCRIPTION FROM STATIC DATA ---
+  const handleSelectUni = (uni) => {
     setUserData({ ...userData, selectedUni: uni });
     setStep(5);
     
     setIsTyping(true);
-    // Call Gemini to generate the specific description
-    const description = await callGemini(
-        `Write a short, professional description for ${uni.name} located in ${uni.country}. 
-        It should match this format exactly: 
-        "${uni.name} is a public/private university in [City], ${uni.country}. The university offers various programs including MBBS. The MBBS program is ${uni.duration} years long and taught in English. It is accredited by the National Medical Commission (NMC) of India and the World Health Organization (WHO)." 
-        Do not add any other introductory text.`
-    );
     
-    addBotMessage(description);
-    
-    // Follow up message after delay
     setTimeout(() => {
-        addBotMessage("To check your eligibility and receive the official brochure, please share your **Phone Number**.");
-    }, 1500);
+        setIsTyping(false);
+        // Look up the static description or fall back to shared/generated
+        let description = universityDescriptions[uni.name] || SHARED_DESCRIPTIONS[uni.country];
+        
+        // If still no description (fallback logic), use a safe default
+        if (!description) {
+            description = `${uni.name} is a prestigious medical university in ${uni.country}. It offers a ${uni.duration}-year ${uni.medium}-medium program recognized by the WHO and NMC.`;
+        }
+
+        addBotMessage(description);
+        
+        // Follow up message after delay
+        setTimeout(() => {
+            addBotMessage("To check your eligibility and receive the official brochure, please share your **Phone Number**.");
+        }, 1500);
+    }, 800);
   };
 
   const handleEducationSelect = (status) => {
