@@ -77,6 +77,26 @@ const DYNAMIC_SLABS = [...new Set(universityDatabase.map(u => u.slab))].sort((a,
     return numA - numB;
 });
 
+const GREETINGS = ["hi", "hello", "hey", "hii", "hellooo", "hola", "namaste", "namaskaram", "good morning", "good evening", "hlo"];
+
+// Define country codes for flag lookups
+const countryCodes = {
+  "Georgia": "ge",
+  "Uzbekistan": "uz",
+  "Russia": "ru",
+  "Egypt": "eg",
+  "Armenia": "am",
+  "Bulgaria": "bg",
+  "Hungary": "hu",
+  "Moldova": "md",
+  "Kazakhstan": "kz",
+  "Kyrgyzstan": "kg",
+  "Azerbaijan": "az"
+};
+
+// --- HELPER FUNCTIONS ---
+const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
+
 // --- STATIC DESCRIPTIONS (UPDATED FROM USER - COMPLETE) ---
 const universityDescriptions = {
   // GEORGIA
@@ -155,26 +175,6 @@ const SHARED_DESCRIPTIONS = {
   "Kyrgyzstan": "Government universities offering low-cost, WHO & NMC-recognized 6-year English-medium MBBS programs. Large Indian communities and dedicated FMGE coaching."
 };
 
-const GREETINGS = ["hi", "hello", "hey", "hii", "hellooo", "hola", "namaste", "namaskaram", "good morning", "good evening", "hlo"];
-
-// Define country codes for flag lookups
-const countryCodes = {
-  "Georgia": "ge",
-  "Uzbekistan": "uz",
-  "Russia": "ru",
-  "Egypt": "eg",
-  "Armenia": "am",
-  "Bulgaria": "bg",
-  "Hungary": "hu",
-  "Moldova": "md",
-  "Kazakhstan": "kz",
-  "Kyrgyzstan": "kg",
-  "Azerbaijan": "az"
-};
-
-// --- HELPER FUNCTIONS ---
-const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
-
 // --- HELPER COMPONENTS ---
 
 const TypingIndicator = () => (
@@ -202,7 +202,7 @@ const ChatMessage = ({ msg }) => {
             ? 'bg-white border border-red-100 text-gray-800 rounded-tl-none' 
             : 'bg-red-600 text-white rounded-tr-none'
         }`}>
-          {msg.text && <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>}
+          {msg.text && <div className="whitespace-pre-line leading-relaxed">{msg.text}</div>}
           {msg.customRender}
         </div>
       </div>
@@ -217,6 +217,7 @@ export default function CeecoChatbot() {
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [step, setStep] = useState(0); 
+  const [isAiMode, setIsAiMode] = useState(false); 
   
   const [userData, setUserData] = useState({
     name: "",
@@ -254,12 +255,43 @@ export default function CeecoChatbot() {
     setMessages(prev => [...prev, { sender: 'user', text }]);
   };
 
-  const handleSendMessage = () => {
+  // --- GEMINI API INTEGRATION ---
+  const callGemini = async (prompt) => {
+    setIsTyping(true);
+    try {
+      const apiKey = ""; // Runtime provided
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Details currently unavailable.";
+    } catch (e) {
+      console.error(e);
+      return "I'm having trouble connecting to the university database right now.";
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
     if (!userInput.trim()) return;
     const text = userInput;
     setUserInput("");
     addUserMessage(text);
-    processUserResponse(text);
+
+    if (isAiMode) {
+        const response = await callGemini(`You are Ceeco AI, a friendly and expert study abroad counselor for Ceeco International in Kerala. 
+        User Question: "${text}"
+        Context: User is interested in MBBS abroad. Current selected country: ${userData.country || "Not selected yet"}.
+        Answer briefly and helpfully.`);
+        addBotMessage(response);
+    } else {
+        processUserResponse(text);
+    }
   };
 
   // Global Back Button Logic
@@ -285,7 +317,19 @@ export default function CeecoChatbot() {
 
   const triggerBudgetReset = () => {
     setStep(2);
-    addBotMessage("Sure! Let's update your budget preference.\n\nWhat is your approximate Total Course Budget in INR?");
+    addBotMessage("Sure! Let's update your budget preference.\n\nWhat is your approximate Total Course Budget in INR?",
+      <div className="flex flex-wrap gap-2 mt-3">
+           {DYNAMIC_SLABS.map((slab) => (
+               <button 
+                 key={slab}
+                 onClick={() => handleBudgetSelect(slab)} 
+                 className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-full shadow-sm hover:bg-red-50 hover:border-red-400 transition-all text-sm mb-1"
+               >
+                 {slab}
+               </button>
+           ))}
+      </div>
+    );
   };
 
   const triggerCountryReset = (slabToUse) => {
@@ -334,7 +378,20 @@ export default function CeecoChatbot() {
       }
       setUserData({ ...userData, name: text });
       setStep(2);
-      addBotMessage(`Nice to meet you, ${text}! 😊\n\nWhat is your approximate Total Course Budget in INR?`);
+      addBotMessage(
+        `Nice to meet you, ${text}! 😊\n\nWhat is your approximate Total Course Budget in INR?`,
+        <div className="flex flex-wrap gap-2 mt-3">
+             {DYNAMIC_SLABS.map((slab) => (
+                 <button 
+                   key={slab}
+                   onClick={() => handleBudgetSelect(slab)} 
+                   className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-full shadow-sm hover:bg-red-50 hover:border-red-400 transition-all text-sm mb-1"
+                 >
+                   {slab}
+                 </button>
+             ))}
+        </div>
+      );
       return;
     }
 
@@ -527,15 +584,22 @@ export default function CeecoChatbot() {
         setIsTyping(false);
         setStep(8);
         addBotMessage(
-            "Thank you! 🌟\n\nYou are eligible for **FREE Counseling** from our experts.\n\nOur team will contact you shortly on your number to answer all your doubts regarding certificate value and admission process.\n\nHave a great day! ❤️",
-            <div className="mt-3">
+            <div className="space-y-2">
+              <p>Thank you! 🌟</p>
+              <p>You are eligible for **FREE Counseling** from our experts.</p>
+              <p>Our team will contact you shortly on your number to answer all your doubts regarding certificate value and admission process.</p>
+              <p className="font-bold text-red-600 mt-4 text-lg animate-pulse">skip the waiting and contact us now!!</p>
+              <p>Have a great day! ❤️</p>
+            </div>,
+            <div className="mt-4">
                <a 
                  href="https://wa.me/918137878027" 
                  target="_blank" 
                  rel="noopener noreferrer"
-                 className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-xl text-sm font-bold transition-all shadow-sm w-full sm:w-auto"
+                 className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white py-3 px-6 rounded-xl text-base font-bold transition-all shadow-md w-full sm:w-auto transform hover:scale-105"
                >
-                 <MessageCircle size={18} /> Chat With US
+                 <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-6 h-6" /> 
+                 Whatsapp
                </a>
             </div>
         );
@@ -575,20 +639,7 @@ export default function CeecoChatbot() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-lg z-20">
-        {step === 2 && (
-          <div className="flex flex-wrap gap-2 mb-3 justify-center max-h-[30vh] overflow-y-auto">
-             {DYNAMIC_SLABS.map((slab) => (
-                 <button 
-                   key={slab}
-                   onClick={() => handleBudgetSelect(slab)} 
-                   className="bg-red-50 border border-red-200 text-red-800 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 flex-grow"
-                 >
-                   {slab}
-                 </button>
-             ))}
-          </div>
-        )}
-
+        
         {step === 7 && (
           <div className="flex flex-wrap gap-2 mb-3 justify-center">
             {["10th", "11th", "12th pursuing", "Neet Preparation"].map(s => (
