@@ -71,6 +71,12 @@ const universityDatabase = [
   { id: 'az1', country: "Azerbaijan", name: "Azerbaijan Medical University", fees: "6750", currency: "USD", duration: "6", medium: "English", slab: "35-40 Lakhs" },
 ];
 
+const DYNAMIC_SLABS = [...new Set(universityDatabase.map(u => u.slab))].sort((a, b) => {
+    const numA = parseInt(a.split('-')[0]);
+    const numB = parseInt(b.split('-')[0]);
+    return numA - numB;
+});
+
 // --- STATIC DESCRIPTIONS (UPDATED FROM USER - COMPLETE) ---
 const universityDescriptions = {
   // GEORGIA
@@ -141,16 +147,15 @@ const universityDescriptions = {
   "Azerbaijan Medical University": "Azerbaijan Medical University (AMU), founded in 1930 in Baku, offers a 6-year English-medium MBBS program recognized by WHO, NMC (India), ECFMG, and global bodies. Graduates qualify for FMGE/NExT, USMLE, PLAB, and practice in 21+ countries. Ranked top in Azerbaijan, AMU hosts 1,200+ internationals from 21 countries, with modern labs and cultural support for Indian students."
 };
 
-const DYNAMIC_SLABS = [...new Set(universityDatabase.map(u => u.slab))].sort((a, b) => {
-    const numA = parseInt(a.split('-')[0]);
-    const numB = parseInt(b.split('-')[0]);
-    return numA - numB;
-});
+const SHARED_DESCRIPTIONS = {
+  "Uzbekistan": "Government universities offering highly affordable 6-year English-medium MBBS programs. Recognized by WHO, NMC India, PMDC, and WDMS. Graduates eligible for FMGE, USMLE, PLAB, and practice in India, Gulf countries, and worldwide. Very high FMGE passing percentage.",
+  "Russia": "Prestigious Russian government medical universities offering 6-year English-medium MD programs. Recognized by WHO, NMC India, ECFMG, and WDMS. Graduates can practice in India (after FMGE), USA (USMLE), UK (PLAB), Australia, and Europe. Strong clinical training in large university hospitals and excellent FMGE results.",
+  "Egypt": "Among the oldest and most reputed medical universities in the Middle East. 7-year English-medium programs (including internship) recognized by WHO, NMC India, ECFMG, and Arab Board. Massive patient flow ensures unmatched clinical exposure. Graduates eligible for FMGE, USMLE, PLAB, and practice worldwide.",
+  "Bulgaria": "Top European medical universities offering 6-year English-medium MD programs fully recognized across the EU, UK, USA (after USMLE), India (after FMGE), and worldwide. Graduates receive an EU degree valid in all European countries.",
+  "Kyrgyzstan": "Government universities offering low-cost, WHO & NMC-recognized 6-year English-medium MBBS programs. Large Indian communities and dedicated FMGE coaching."
+};
 
 const GREETINGS = ["hi", "hello", "hey", "hii", "hellooo", "hola", "namaste", "namaskaram", "good morning", "good evening", "hlo"];
-
-// --- HELPER FUNCTIONS ---
-const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
 
 // Define country codes for flag lookups
 const countryCodes = {
@@ -166,6 +171,9 @@ const countryCodes = {
   "Kyrgyzstan": "kg",
   "Azerbaijan": "az"
 };
+
+// --- HELPER FUNCTIONS ---
+const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
 
 // --- HELPER COMPONENTS ---
 
@@ -209,7 +217,6 @@ export default function CeecoChatbot() {
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [step, setStep] = useState(0); 
-  const [isAiMode, setIsAiMode] = useState(false); 
   
   const [userData, setUserData] = useState({
     name: "",
@@ -247,53 +254,12 @@ export default function CeecoChatbot() {
     setMessages(prev => [...prev, { sender: 'user', text }]);
   };
 
-  // --- GEMINI API INTEGRATION ---
-  const callGemini = async (prompt) => {
-    setIsTyping(true);
-    try {
-      const apiKey = ""; // Runtime provided
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-      const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Details currently unavailable.";
-    } catch (e) {
-      console.error(e);
-      return "I'm having trouble connecting to the university database right now.";
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (!userInput.trim()) return;
     const text = userInput;
     setUserInput("");
     addUserMessage(text);
-
-    if (isAiMode) {
-        const response = await callGemini(`You are Ceeco AI, a friendly and expert study abroad counselor for Ceeco International in Kerala. 
-        User Question: "${text}"
-        Context: User is interested in MBBS abroad. Current selected country: ${userData.country || "Not selected yet"}.
-        Answer briefly and helpfully.`);
-        addBotMessage(response);
-    } else {
-        processUserResponse(text);
-    }
-  };
-
-  const toggleAiMode = () => {
-      if (isAiMode) {
-          setIsAiMode(false);
-          addBotMessage("Exiting AI Counselor mode. Let's continue with your application.");
-      } else {
-          setIsAiMode(true);
-          addBotMessage("✨ AI Counselor Mode Activated!\n\nI am now connected to my advanced knowledge base. Ask me anything about studying MBBS abroad.");
-      }
+    processUserResponse(text);
   };
 
   // Global Back Button Logic
@@ -536,8 +502,13 @@ export default function CeecoChatbot() {
     setTimeout(() => {
         setIsTyping(false);
         // Look up the static description or fall back to shared/generated
-        let description = universityDescriptions[uni.name] || "This university offers a comprehensive MBBS program.";
+        let description = universityDescriptions[uni.name] || SHARED_DESCRIPTIONS[uni.country];
         
+        // If still no description (fallback logic), use a safe default
+        if (!description) {
+            description = `${uni.name} is a prestigious medical university in ${uni.country}. It offers a ${uni.duration}-year ${uni.medium}-medium program recognized by the WHO and NMC.`;
+        }
+
         addBotMessage(description);
         
         // Follow up message after delay
@@ -584,6 +555,7 @@ export default function CeecoChatbot() {
           </div>
         </div>
         
+        {/* Call Button & Status */}
         <div className="flex items-center gap-3">
             <a href="tel:+918137878027" className="bg-white text-red-600 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center hover:bg-red-50 transition-colors">
                 <Phone size={14} className="mr-1" /> Call Now
@@ -603,7 +575,7 @@ export default function CeecoChatbot() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-lg z-20">
-        {step === 2 && !isAiMode && (
+        {step === 2 && (
           <div className="flex flex-wrap gap-2 mb-3 justify-center max-h-[30vh] overflow-y-auto">
              {DYNAMIC_SLABS.map((slab) => (
                  <button 
@@ -617,7 +589,7 @@ export default function CeecoChatbot() {
           </div>
         )}
 
-        {step === 7 && !isAiMode && (
+        {step === 7 && (
           <div className="flex flex-wrap gap-2 mb-3 justify-center">
             {["10th", "11th", "12th pursuing", "Neet Preparation"].map(s => (
               <button key={s} onClick={() => handleEducationSelect(s)} 
@@ -628,39 +600,27 @@ export default function CeecoChatbot() {
           </div>
         )}
 
-        <div className="flex flex-col gap-2">
-            <div className="flex justify-end">
-                <button 
-                    onClick={toggleAiMode}
-                    className={`text-xs font-bold px-3 py-1 rounded-full flex items-center transition-all ${isAiMode ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-200'}`}
-                >
-                    {isAiMode ? <X size={12} className="mr-1" /> : <Sparkles size={12} className="mr-1" />}
-                    {isAiMode ? "Exit AI Chat" : "Ask AI Counselor"}
-                </button>
-            </div>
+        <div className="flex items-center gap-2">
+           {step > 1 && step < 8 && step !== 3 && step !== 4 && (
+             <button onClick={handleBack} className="p-3 text-gray-500 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} /></button>
+           )}
 
-            <div className="flex items-center gap-2">
-                {step > 1 && step < 8 && step !== 3 && step !== 4 && !isAiMode && (
-                    <button onClick={handleBack} className="p-3 text-gray-500 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} /></button>
-                )}
-
-                <input
-                    type="text"
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder={isAiMode ? "✨ Ask me anything..." : (step === 5 ? "Enter Phone Number..." : (step === 6 ? "Enter City..." : "Type here..."))}
-                    disabled={!isAiMode && (step === 2 || step === 3 || step === 4 || step === 7 || step === 8)} 
-                    className={`flex-1 rounded-full px-5 py-3 focus:outline-none focus:ring-2 border-none text-sm transition-all ${isAiMode ? 'bg-indigo-50 focus:ring-indigo-500 text-indigo-900 placeholder-indigo-400' : 'bg-gray-100 text-gray-800 focus:ring-red-500'}`}
-                />
-                <button 
-                    onClick={handleSendMessage}
-                    disabled={!userInput.trim()}
-                    className={`p-3 rounded-full text-white shadow-lg transition-transform transform active:scale-95 ${userInput.trim() ? (isAiMode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-red-600 hover:bg-red-700') : 'bg-gray-300 cursor-not-allowed'}`}
-                >
-                    <Send size={20} />
-                </button>
-            </div>
+          <input
+            type="text"
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+            placeholder={step === 5 ? "Enter Phone Number..." : (step === 6 ? "Enter City..." : "Type here...")}
+            disabled={step === 2 || step === 3 || step === 4 || step === 7 || step === 8} 
+            className="flex-1 bg-gray-100 text-gray-800 rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 border-none text-sm"
+          />
+          <button 
+            onClick={handleSendMessage}
+            disabled={!userInput.trim()}
+            className={`p-3 rounded-full text-white shadow-lg transition-transform transform active:scale-95 ${userInput.trim() ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-300 cursor-not-allowed'}`}
+          >
+            <Send size={20} />
+          </button>
         </div>
         
         <div className="text-center mt-2">
