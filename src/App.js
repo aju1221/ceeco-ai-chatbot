@@ -82,7 +82,7 @@ const GREETINGS = ["hi", "hello", "hey", "hii", "hellooo", "hola", "namaste", "n
 // --- HELPER FUNCTIONS ---
 const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
 
-// Map country names to ISO codes for Flag CDN
+// Define country codes for flag lookups
 const countryCodes = {
   "Georgia": "ge",
   "Uzbekistan": "uz",
