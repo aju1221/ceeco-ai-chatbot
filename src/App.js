@@ -650,36 +650,29 @@ export default function CeecoChatbot() {
 
     // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
 const submitToGoogleSheets = async () => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyFX4XUv_6f8szqCUNMZWCOXYHXe6Irq2zDO8u-Fa3yaZAFRtOLaKTWsJhOtEBm08U5/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCeDFZJ9ngHH3WA4ngEJ0wFymZxmGzVWrEBSadh2qC4xPsJbUlpDiKZ0pphTaIScZV/exec";
 
     const payload = {
         name: userData.name || "Not Provided",
         phone: userData.phone || "Not Provided",
         city: userData.city || "Not Provided",
         education: userData.education || "Not Selected",
-        budgetSlab: userData.budgetSlab || "Not Selected",  // Matches your "Budget" header
+        budgetSlab: userData.budgetSlab || "Not Selected",
         country: userData.country || "Not Selected",
         university: userData.selectedUni ? userData.selectedUni.name : "Not Selected",
-        userType: userData.userType || "Not Selected"  // Optional extra field
+        userType: userData.userType || "Not Selected",   // ← This saves "Student" or "Parent"
+        timestamp: new Date().toLocaleString('en-IN')
     };
 
     try {
-        const response = await fetch(SCRIPT_URL, {
+        await fetch(SCRIPT_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "text/plain;charset=utf-8"  // KEY: Bypasses CORS preflight
-            },
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
         });
-
-        const result = await response.text();  // Get response body for debugging
-        if (response.ok) {
-            console.log("✅ LEAD SAVED TO GOOGLE SHEETS! Response:", result);
-        } else {
-            console.error("❌ Sheet error:", response.status, result);
-        }
+        console.log("All data saved including User Type (Student/Parent)");
     } catch (err) {
-        console.error("❌ Submission failed:", err);
+        console.error("Save failed:", err);
     }
 };
   // Trigger submission when step reaches 9 (Final Step)
