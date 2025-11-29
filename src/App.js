@@ -79,7 +79,7 @@ const DYNAMIC_SLABS = [...new Set(universityDatabase.map(u => u.slab))].sort((a,
 
 const GREETINGS = ["hi", "hello", "hey", "hii", "hellooo", "hola", "namaste", "namaskaram", "good morning", "good evening", "hlo"];
 
-// Define country codes for flag lookups - DEFINED BEFORE USAGE
+// Define country codes for flag lookups
 const countryCodes = {
   "Georgia": "ge",
   "Uzbekistan": "uz",
@@ -109,9 +109,7 @@ const universityDescriptions = {
   "Alte University": "A modern private university offering a high-quality, affordable 6-year English MD program. Recognized by WHO, NMC, ECFMG, and WDOMS. New simulation labs and direct hospital partnerships provide excellent hands-on training. Eligible for FMGE, USMLE, PLAB.",
   "Georgian National University SEU": "One of the largest private universities in Georgia with a well-structured 6-year English-medium MD program. Fully recognized by WHO, NMC India, ECFMG, and WDOMS. Strong focus on research and clinical skills; graduates eligible for FMGE, USMLE, and global practice.",
   "International Black Sea University": "Offers an American-style 6-year English MD program recognized by WHO, NMC, ECFMG, and WDOMS. Multicultural campus and affordable fees with solid clinical training. Graduates can appear for USMLE, FMGE, and other licensing exams worldwide.",
-  "East European University": "One of the most budget-friendly yet quality-focused universities in Georgia. 6-year English-medium MD program recognized by WHO, NMC India, ECFMG, and WDOMS. Large Indian student community and excellent FMGE coaching support.",
   "East West University": "One of the most budget-friendly yet quality-focused universities in Georgia. 6-year English-medium MD program recognized by WHO, NMC India, ECFMG, and WDOMS. Large Indian student community and excellent FMGE coaching support.",
-
   
   // UZBEKISTAN
   "Tashkent Medical Academy": "Tashkent Medical Academy (TMA), founded in 1920, is Uzbekistan's oldest government medical university and a top choice for international students pursuing a 6-year English-medium MBBS program. Ranked 13th in Uzbekistan and recognized by WHO, NMC (India), ECFMG, UNESCO, and WDOMS, its degree is valid globally, enabling graduates to sit for FMGE/NExT (India, with high passing rates), USMLE (USA), and PLAB (UK) for practice in India, USA, UK, Australia, and beyond. With modern labs, partnerships like Harvard Medical School, and clinical training in university hospitals, TMA emphasizes practical skills and research, making it ideal for Indian students seeking affordable, high-quality education.",
@@ -224,7 +222,6 @@ export default function CeecoChatbot() {
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [step, setStep] = useState(0); 
-  const [isAiMode, setIsAiMode] = useState(false); 
   
   const [userData, setUserData] = useState({
     name: "",
@@ -650,6 +647,45 @@ export default function CeecoChatbot() {
         );
     }, 1000);
   };
+
+  // --- GOOGLE SHEETS SUBMISSION ---
+  const submitToGoogleSheets = async () => {
+      // Replace with your Google Apps Script Web App URL
+      const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL"; 
+      
+      if (SCRIPT_URL === "YOUR_GOOGLE_SCRIPT_WEB_APP_URL") {
+          console.warn("Google Script URL not set. Data will not be saved to Sheets.");
+          return;
+      }
+
+      const formData = new FormData();
+      formData.append("Name", userData.name);
+      formData.append("Phone", userData.phone);
+      formData.append("City", userData.city);
+      formData.append("Role", userData.userType);
+      formData.append("Budget", userData.budgetSlab);
+      formData.append("Country", userData.country);
+      formData.append("University", userData.selectedUni ? userData.selectedUni.name : "N/A");
+      formData.append("Education", userData.education);
+      formData.append("Timestamp", new Date().toLocaleString());
+
+      try {
+          await fetch(SCRIPT_URL, {
+              method: "POST",
+              body: formData
+          });
+          console.log("Data submitted to Google Sheets");
+      } catch (error) {
+          console.error("Error submitting to Google Sheets:", error);
+      }
+  };
+
+  // Trigger submission when step reaches 9 (Final Step)
+  useEffect(() => {
+      if (step === 9) {
+          submitToGoogleSheets();
+      }
+  }, [step]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 font-sans">
