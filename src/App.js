@@ -649,40 +649,37 @@ export default function CeecoChatbot() {
   };
 
     // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
-// --- FULL DATA SUBMISSION (SNAPSHOT FIX — ALL FIELDS SAVE) ---
+// --- FINAL SUBMIT TO GOOGLE SHEETS — ALL DATA SAVES 100% ---
 const submitToGoogleSheets = async () => {
-    // Snapshot current state to avoid lag
-    const snapshot = {
-        name: userData.name || "Not Provided",
-        phone: userData.phone || "Not Provided",
-        city: userData.city || "Not Provided",
-        education: userData.education || "Not Selected",
-        budgetSlab: userData.budgetSlab || "Not Selected",
-        country: userData.country || "Not Selected",
-        university: userData.selectedUni ? userData.selectedUni.name : "Not Selected",
-        userType: userData.userType || "Not Selected",
-        timestamp: new Date().toLocaleString('en-IN')
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1-Zw0fpXYuyPhb2kUBo231FM79QPXu3xqXsZ2zFRlyK_btI3xD0ROXyHVKm7N1BJ3/exec";
+
+    const payload = {
+        name: userData.name?.trim() || "Not Provided",
+        phone: userData.phone?.trim() || "Not Provided",
+        city: userData.city?.trim() || "Not Provided",
+        education: userData.education?.trim() || "Not Selected",
+        budgetSlab: userData.budgetSlab?.trim() || "Not Selected",
+        country: userData.country?.trim() || "Not Selected",
+        university: userData.selectedUni?.name?.trim() || "Not Selected",
+        userType: userData.userType?.trim() || "Not Selected"
     };
 
-    console.log("SNAPSHOT BEFORE SAVE (check if all fields filled):", snapshot);  // Debug: See this in console
-
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5aNhVRrYQzASiO4RtR0Yn0kjqJ3ubMhxebhSc37lIQ1g0fM9ijPcY6wSF7_c0CGmP/exec";  // Update if changed
+    console.log("SENDING TO SHEET:", payload);  // ← Check this in console
 
     try {
         const response = await fetch(SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(snapshot)
+            body: JSON.stringify(payload)
         });
 
-        const result = await response.text();
         if (response.ok) {
-            console.log("✅ FULL LEAD SAVED! Snapshot:", snapshot);
+            console.log("ALL DATA SAVED SUCCESSFULLY!");
         } else {
-            console.error("❌ Save error:", result);
+            console.error("Save failed:", await response.text());
         }
     } catch (err) {
-        console.error("❌ Fetch failed:", err);
+        console.error("Network error:", err);
     }
 };
   // Trigger submission when step reaches 9 (Final Step)
