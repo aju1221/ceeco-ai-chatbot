@@ -650,36 +650,36 @@ export default function CeecoChatbot() {
 
   // --- GOOGLE SHEETS SUBMISSION ---
   const submitToGoogleSheets = async () => {
-      // Replace with your Google Apps Script Web App URL
-      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCeDFZJ9ngHH3WA4ngEJ0wFymZxmGzVWrEBSadh2qC4xPsJbUlpDiKZ0pphTaIScZV/exec"; 
-      
-      if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxCeDFZJ9ngHH3WA4ngEJ0wFymZxmGzVWrEBSadh2qC4xPsJbUlpDiKZ0pphTaIScZV/exec") {
-          console.warn("Google Script URL not set. Data will not be saved to Sheets.");
-          return;
-      }
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCeDFZJ9ngHH3WA4ngEJ0wFymZxmGzVWrEBSadh2qC4xPsJbUlpDiKZ0pphTaIScZV/exec";
 
-      const formData = new FormData();
-      formData.append("Name", userData.name);
-      formData.append("Phone", userData.phone);
-      formData.append("City", userData.city);
-      formData.append("Role", userData.userType);
-      formData.append("Budget", userData.budgetSlab);
-      formData.append("Country", userData.country);
-      formData.append("University", userData.selectedUni ? userData.selectedUni.name : "N/A");
-      formData.append("Education", userData.education);
-      formData.append("Timestamp", new Date().toLocaleString());
+    const payload = {
+        name: userData.name || "",
+        phone: userData.phone || "",
+        city: userData.city || "",
+        education: userData.education || "",
+        budgetSlab: userData.budgetSlab || "",
+        country: userData.country || "",
+        university: userData.selectedUni ? userData.selectedUni.name : "Not Selected",
+        userType: userData.userType || "",
+        timestamp: new Date().toLocaleString('en-IN')
+    };
 
-      try {
-          await fetch(SCRIPT_URL, {
-              method: "POST",
-              body: formData
-          });
-          console.log("Data submitted to Google Sheets");
-      } catch (error) {
-          console.error("Error submitting to Google Sheets:", error);
-      }
-  };
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
 
+        if (response.ok) {
+            console.log("Lead saved to Google Sheets!");
+        } else {
+            console.error("Sheet error:", await response.text());
+        }
+    } catch (err) {
+        console.error("Failed to save lead:", err);
+    }
+};
   // Trigger submission when step reaches 9 (Final Step)
   useEffect(() => {
       if (step === 9) {
