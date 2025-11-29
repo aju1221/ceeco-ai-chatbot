@@ -650,29 +650,33 @@ export default function CeecoChatbot() {
 
     // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
 const submitToGoogleSheets = async () => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCeDFZJ9ngHH3WA4ngEJ0wFymZxmGzVWrEBSadh2qC4xPsJbUlpDiKZ0pphTaIScZV/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5yitln2CEVMQiFq4cWNG_dwdCJ0kG03UAy47vl7Ql4xhgvkGIIBkLV_-vlrxALBK-/exec";  // Update if yours changed
 
     const payload = {
         name: userData.name || "Not Provided",
         phone: userData.phone || "Not Provided",
         city: userData.city || "Not Provided",
         education: userData.education || "Not Selected",
-        budgetSlab: userData.budgetSlab || "Not Selected",
+        budgetSlab: userData.budgetSlab || "Not Selected",  // For Budget column
         country: userData.country || "Not Selected",
         university: userData.selectedUni ? userData.selectedUni.name : "Not Selected",
-        userType: userData.userType || "Not Selected",   // ← This saves "Student" or "Parent"
-        timestamp: new Date().toLocaleString('en-IN')
+        userType: userData.userType || "Not Selected"  // ← Student or Parent
     };
 
     try {
-        await fetch(SCRIPT_URL, {
+        const response = await fetch(SCRIPT_URL, {
             method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            headers: { "Content-Type": "text/plain;charset=utf-8" },  // CORS bypass
             body: JSON.stringify(payload)
         });
-        console.log("All data saved including User Type (Student/Parent)");
+
+        if (response.ok) {
+            console.log("✅ FULL LEAD SAVED! Payload:", payload);  // Debug: Check console for all data
+        } else {
+            console.error("❌ Error:", await response.text());
+        }
     } catch (err) {
-        console.error("Save failed:", err);
+        console.error("❌ Fetch failed:", err);
     }
 };
   // Trigger submission when step reaches 9 (Final Step)
