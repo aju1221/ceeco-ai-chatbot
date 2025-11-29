@@ -651,9 +651,9 @@ export default function CeecoChatbot() {
   // --- GOOGLE SHEETS SUBMISSION ---
   const submitToGoogleSheets = async () => {
       // Replace with your Google Apps Script Web App URL
-      const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL"; 
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCeDFZJ9ngHH3WA4ngEJ0wFymZxmGzVWrEBSadh2qC4xPsJbUlpDiKZ0pphTaIScZV/exec"; 
       
-      if (SCRIPT_URL === "YOUR_GOOGLE_SCRIPT_WEB_APP_URL") {
+      if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxCeDFZJ9ngHH3WA4ngEJ0wFymZxmGzVWrEBSadh2qC4xPsJbUlpDiKZ0pphTaIScZV/exec") {
           console.warn("Google Script URL not set. Data will not be saved to Sheets.");
           return;
       }
