@@ -79,7 +79,7 @@ const DYNAMIC_SLABS = [...new Set(universityDatabase.map(u => u.slab))].sort((a,
 
 const GREETINGS = ["hi", "hello", "hey", "hii", "hellooo", "hola", "namaste", "namaskaram", "good morning", "good evening", "hlo"];
 
-// Define country codes for flag lookups
+// Define country codes for flag lookups - DEFINED BEFORE USAGE
 const countryCodes = {
   "Georgia": "ge",
   "Uzbekistan": "uz",
@@ -97,9 +97,9 @@ const countryCodes = {
 // --- HELPER FUNCTIONS ---
 const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
 
-// --- STATIC DESCRIPTIONS ---
+// --- STATIC DESCRIPTIONS (UPDATED FROM USER - COMPLETE) ---
 const universityDescriptions = {
-  // (Keeping all descriptions from previous version)
+  // GEORGIA
   "Caucasus University": "Caucasus University, located in Tbilisi, offers a 6-year English-medium MD program recognized by WHO, ECFMG (USA), NMC India, and listed in World Directory of Medical Schools (WDMS). The American-style curriculum prepares students for USMLE, PLAB, and FMGE with a passing rate above 60% in recent years. Modern simulation labs and affiliated multi-profile hospitals ensure strong clinical exposure from the 3rd year.",
   "Tbilisi State Medical University (American Curriculum)": "The top-ranked and oldest medical university in Georgia (founded 1918). The 6-year US-modeled MD program is recognized worldwide (WHO, ECFMG, NMC, GMC-UK). Graduates are eligible for USMLE (Step 1 & 2 from 1st year), PLAB, FMGE (highest success rate in Georgia), and direct residency in the USA/Canada/Europe. Over 85% Indian students clear FMGE in first attempt.",
   "Tbilisi State Medical University (European Curriculum)": "The same prestigious TSMU with a 6-year European-standard English-medium program. Fully compliant with EU directives; graduates can practice across Europe after licensing exams. Recognized by WHO, NMC India, ECFMG, and WDMS. Excellent preparation for FMGE, PLAB, and European licensing exams.",
@@ -307,7 +307,7 @@ export default function CeecoChatbot() {
         triggerCountryReset();
     } else if (step === 5) {
         addBotMessage("Going back to the university list...");
-        handleCountrySelect(userData.country, userData.budgetSlab);
+        showUniversitiesForCountry(userData.country, userData.budgetSlab);
     } else if (step === 6) {
         setStep(5);
         addBotMessage("Okay, please re-enter your phone number.");
@@ -509,10 +509,8 @@ export default function CeecoChatbot() {
     }
   };
 
-  const handleCountrySelect = (country, slab) => {
-    setUserData(prev => ({ ...prev, country: country }));
-    setStep(4);
-    
+  // New helper function to display universities (reused by handleCountrySelect and handleBack)
+  const showUniversitiesForCountry = (country, slab) => {
     const targetSlab = normalize(slab);
     const universities = universityDatabase.filter(u => u.country === country && normalize(u.slab) === targetSlab);
     
@@ -585,6 +583,13 @@ export default function CeecoChatbot() {
     }, 1000);
   };
 
+  const handleCountrySelect = (country, slab) => {
+    setUserData(prev => ({ ...prev, country: country }));
+    setStep(4);
+    addUserMessage(country); 
+    showUniversitiesForCountry(country, slab);
+  };
+
   // --- SHOW DESCRIPTION FROM STATIC DATA ---
   const handleSelectUni = (uni) => {
     setUserData(prev => ({ ...prev, selectedUni: uni }));
@@ -594,14 +599,17 @@ export default function CeecoChatbot() {
     
     setTimeout(() => {
         setIsTyping(false);
+        // Look up the static description or fall back to shared/generated
         let description = universityDescriptions[uni.name] || SHARED_DESCRIPTIONS[uni.country];
         
+        // If still no description (fallback logic), use a safe default
         if (!description) {
             description = `${uni.name} is a prestigious medical university in ${uni.country}. It offers a ${uni.duration}-year ${uni.medium}-medium program recognized by the WHO and NMC.`;
         }
 
         addBotMessage(description);
         
+        // Follow up message after delay
         setTimeout(() => {
             addBotMessage("To check your eligibility and receive the official brochure, please share your **Phone Number**.");
         }, 1500);
@@ -644,6 +652,7 @@ export default function CeecoChatbot() {
       <header className="bg-gradient-to-r from-red-700 to-red-600 text-white p-4 shadow-lg flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center space-x-2">
           <div className="bg-white p-1 rounded-full">
+             {/* Using uploaded logo if available, fallback to icon */}
              <img src="https://ceecointernational.com/wp-content/uploads/2025/11/cecco.png" alt="Ceeco Logo" className="w-8 h-8 object-contain" onError={(e) => {e.target.onerror = null; e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
              <School className="text-red-600 hidden" size={20} />
           </div>
@@ -653,6 +662,7 @@ export default function CeecoChatbot() {
           </div>
         </div>
         
+        {/* Call Button & Status */}
         <div className="flex items-center gap-3">
             <a href="tel:+918137878027" className="bg-white text-red-600 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center hover:bg-red-50 transition-colors">
                 <Phone size={14} className="mr-1" /> Call Now
@@ -673,6 +683,17 @@ export default function CeecoChatbot() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-lg z-20">
         
+        {step === 7 && (
+          <div className="flex flex-wrap gap-2 mb-3 justify-center">
+            {["10th", "11th", "12th pursuing", "Neet Preparation"].map(s => (
+              <button key={s} onClick={() => handleEducationSelect(s)} 
+                className="bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-lg text-xs font-medium hover:bg-red-600 hover:text-white transition-all">
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
            {step > 0 && step < 9 && step !== 3 && step !== 4 && step !== 7 && (
              <button onClick={handleBack} className="p-3 text-gray-500 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} /></button>
