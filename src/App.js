@@ -650,7 +650,7 @@ export default function CeecoChatbot() {
 
     // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
 const submitToGoogleSheets = async () => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCeDFZJ9ngHH3WA4ngEJ0wFymZxmGzVWrEBSadh2qC4xPsJbUlpDiKZ0pphTaIScZV/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyFX4XUv_6f8szqCUNMZWCOXYHXe6Irq2zDO8u-Fa3yaZAFRtOLaKTWsJhOtEBm08U5/exec";
 
     const payload = {
         name: userData.name || "Not Provided",
