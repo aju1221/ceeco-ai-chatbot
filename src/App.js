@@ -648,7 +648,7 @@ export default function CeecoChatbot() {
     }, 1000);
   };
 
-    // --- GOOGLE SHEETS SUBMISSION (FINAL FIX - 100% WORKING) ---
+    // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
 const submitToGoogleSheets = async () => {
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCeDFZJ9ngHH3WA4ngEJ0wFymZxmGzVWrEBSadh2qC4xPsJbUlpDiKZ0pphTaIScZV/exec";
 
@@ -657,31 +657,29 @@ const submitToGoogleSheets = async () => {
         phone: userData.phone || "Not Provided",
         city: userData.city || "Not Provided",
         education: userData.education || "Not Selected",
-        budgetSlab: userData.budgetSlab || "Not Selected",
+        budgetSlab: userData.budgetSlab || "Not Selected",  // Matches your "Budget" header
         country: userData.country || "Not Selected",
         university: userData.selectedUni ? userData.selectedUni.name : "Not Selected",
-        userType: userData.userType || "Not Selected",
-        timestamp: new Date().toLocaleString('en-IN')
+        userType: userData.userType || "Not Selected"  // Optional extra field
     };
 
     try {
-        // This proxy NEVER fails - used by 10,000+ live sites
-        const response = await fetch("https://corsproxy.io/?" + encodeURIComponent(SCRIPT_URL), {
+        const response = await fetch(SCRIPT_URL, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Origin": "https://ceeco-ai-chatbot-48aa.vercel.app"
+                "Content-Type": "text/plain;charset=utf-8"  // KEY: Bypasses CORS preflight
             },
             body: JSON.stringify(payload)
         });
 
+        const result = await response.text();  // Get response body for debugging
         if (response.ok) {
-            console.log("LEAD SAVED TO GOOGLE SHEETS!");
+            console.log("✅ LEAD SAVED TO GOOGLE SHEETS! Response:", result);
         } else {
-            console.warn("Sheet responded but not OK:", response.status);
+            console.error("❌ Sheet error:", response.status, result);
         }
     } catch (err) {
-        console.error("Final fallback failed (should never happen):", err);
+        console.error("❌ Submission failed:", err);
     }
 };
   // Trigger submission when step reaches 9 (Final Step)
