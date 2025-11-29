@@ -100,20 +100,22 @@ const normalize = (str) => str.replace(/\s+/g, '').toLowerCase();
 // --- STATIC DESCRIPTIONS (UPDATED FROM USER - COMPLETE) ---
 const universityDescriptions = {
   // GEORGIA
-  "Caucasus University": "Caucasus University, located in Tbilisi, offers a 6-year English-medium MD program recognized by WHO, ECFMG (USA), NMC India, and listed in World Directory of Medical Schools (WDMS). The American-style curriculum prepares students for USMLE, PLAB, and FMGE with a passing rate above 60% in recent years. Modern simulation labs and affiliated multi-profile hospitals ensure strong clinical exposure from the 3rd year.",
+  "Caucasus University": "Caucasus University, located in Tbilisi, offers a 6-year English-medium MD program recognized by WHO, ECFMG (USA), NMC India, and listed in World Directory of Medical Schools (WDOMS). The American-style curriculum prepares students for USMLE, PLAB, and FMGE with a passing rate above 60% in recent years. Modern simulation labs and affiliated multi-profile hospitals ensure strong clinical exposure from the 3rd year.",
   "Tbilisi State Medical University (American Curriculum)": "The top-ranked and oldest medical university in Georgia (founded 1918). The 6-year US-modeled MD program is recognized worldwide (WHO, ECFMG, NMC, GMC-UK). Graduates are eligible for USMLE (Step 1 & 2 from 1st year), PLAB, FMGE (highest success rate in Georgia), and direct residency in the USA/Canada/Europe. Over 85% Indian students clear FMGE in first attempt.",
-  "Tbilisi State Medical University (European Curriculum)": "The same prestigious TSMU with a 6-year European-standard English-medium program. Fully compliant with EU directives; graduates can practice across Europe after licensing exams. Recognized by WHO, NMC India, ECFMG, and WDMS. Excellent preparation for FMGE, PLAB, and European licensing exams.",
-  "Tbilisi Medical Academy": "Founded by renowned physician Petre Shotadze, TMA offers a student-centric 6-year English MD program recognized by WHO, NMC India, ECFMG, and WDMS. Early clinical exposure from year 2, modern simulation center, and strong FMGE results make it a favorite among Indian students.",
-  "University of Georgia": "One of the largest private universities in Georgia offering a British-style 6-year MD program in English. Recognized by WHO, NMC, ECFMG, GMC (UK), and WDMS. Graduates are eligible for PLAB, USMLE, FMGE, and practice in India, UK, USA, Australia, and Middle East after respective licensing exams.",
-  "European University": "A rapidly growing institution in Tbilisi with a 6-year English-medium MD program recognized by WHO, NMC India, ECFMG, and WDMS. Modern campus, affordable fees, and strong clinical rotations in leading hospitals. High FMGE success rate and increasing popularity among Indian students.",
-  "Alte University": "A modern private university offering a high-quality, affordable 6-year English MD program. Recognized by WHO, NMC, ECFMG, and WDMS. New simulation labs and direct hospital partnerships provide excellent hands-on training. Eligible for FMGE, USMLE, PLAB.",
-  "Georgian National University SEU": "One of the largest private universities in Georgia with a well-structured 6-year English-medium MD program. Fully recognized by WHO, NMC India, ECFMG, and WDMS. Strong focus on research and clinical skills; graduates eligible for FMGE, USMLE, and global practice.",
-  "International Black Sea University": "Offers an American-style 6-year English MD program recognized by WHO, NMC, ECFMG, and WDMS. Multicultural campus and affordable fees with solid clinical training. Graduates can appear for USMLE, FMGE, and other licensing exams worldwide.",
-  "East West University": "One of the most budget-friendly yet quality-focused universities in Georgia. 6-year English-medium MD program recognized by WHO, NMC India, ECFMG, and WDMS. Large Indian student community and excellent FMGE coaching support.",
+  "Tbilisi State Medical University (European Curriculum)": "The same prestigious TSMU with a 6-year European-standard English-medium program. Fully compliant with EU directives; graduates can practice across Europe after licensing exams. Recognized by WHO, NMC India, ECFMG, and WDOMS. Excellent preparation for FMGE, PLAB, and European licensing exams.",
+  "Tbilisi Medical Academy": "Founded by renowned physician Petre Shotadze, TMA offers a student-centric 6-year English MD program recognized by WHO, NMC India, ECFMG, and WDOMS. Early clinical exposure from year 2, modern simulation center, and strong FMGE results make it a favorite among Indian students.",
+  "University of Georgia": "One of the largest private universities in Georgia offering a British-style 6-year MD program in English. Recognized by WHO, NMC, ECFMG, GMC (UK), and WDOMS. Graduates are eligible for PLAB, USMLE, FMGE, and practice in India, UK, USA, Australia, and Middle East after respective licensing exams.",
+  "European University": "A rapidly growing institution in Tbilisi with a 6-year English-medium MD program recognized by WHO, NMC India, ECFMG, and WDOMS. Modern campus, affordable fees, and strong clinical rotations in leading hospitals. High FMGE success rate and increasing popularity among Indian students.",
+  "Alte University": "A modern private university offering a high-quality, affordable 6-year English MD program. Recognized by WHO, NMC, ECFMG, and WDOMS. New simulation labs and direct hospital partnerships provide excellent hands-on training. Eligible for FMGE, USMLE, PLAB.",
+  "Georgian National University SEU": "One of the largest private universities in Georgia with a well-structured 6-year English-medium MD program. Fully recognized by WHO, NMC India, ECFMG, and WDOMS. Strong focus on research and clinical skills; graduates eligible for FMGE, USMLE, and global practice.",
+  "International Black Sea University": "Offers an American-style 6-year English MD program recognized by WHO, NMC, ECFMG, and WDOMS. Multicultural campus and affordable fees with solid clinical training. Graduates can appear for USMLE, FMGE, and other licensing exams worldwide.",
+  "East European University": "One of the most budget-friendly yet quality-focused universities in Georgia. 6-year English-medium MD program recognized by WHO, NMC India, ECFMG, and WDOMS. Large Indian student community and excellent FMGE coaching support.",
+  "East West University": "One of the most budget-friendly yet quality-focused universities in Georgia. 6-year English-medium MD program recognized by WHO, NMC India, ECFMG, and WDOMS. Large Indian student community and excellent FMGE coaching support.",
+
   
   // UZBEKISTAN
-  "Tashkent Medical Academy": "Tashkent Medical Academy (TMA), founded in 1920, is Uzbekistan's oldest government medical university and a top choice for international students pursuing a 6-year English-medium MBBS program. Ranked 13th in Uzbekistan and recognized by WHO, NMC (India), ECFMG, UNESCO, and WDMS, its degree is valid globally, enabling graduates to sit for FMGE/NExT (India, with high passing rates), USMLE (USA), and PLAB (UK) for practice in India, USA, UK, Australia, and beyond. With modern labs, partnerships like Harvard Medical School, and clinical training in university hospitals, TMA emphasizes practical skills and research, making it ideal for Indian students seeking affordable, high-quality education.",
-  "Samarkand State Medical University": "Established in 1930 and restructured in 2022, Samarkand State Medical University (SamSMU) offers a 6-year English-medium MBBS program compliant with international standards, recognized by WHO, NMC (India), PMDC, and WDMS. Graduates are eligible for FMGE/NExT (India, with strong success rates), USMLE, PLAB, and practice in India, Gulf countries, and worldwide. Ranked 3rd in Uzbekistan, it features modern labs, simulation-based learning, and clinical rotations in affiliated hospitals treating diverse cases, attracting over 1,000 Indian students annually for its multicultural environment and low-cost, high-exposure training.",
+  "Tashkent Medical Academy": "Tashkent Medical Academy (TMA), founded in 1920, is Uzbekistan's oldest government medical university and a top choice for international students pursuing a 6-year English-medium MBBS program. Ranked 13th in Uzbekistan and recognized by WHO, NMC (India), ECFMG, UNESCO, and WDOMS, its degree is valid globally, enabling graduates to sit for FMGE/NExT (India, with high passing rates), USMLE (USA), and PLAB (UK) for practice in India, USA, UK, Australia, and beyond. With modern labs, partnerships like Harvard Medical School, and clinical training in university hospitals, TMA emphasizes practical skills and research, making it ideal for Indian students seeking affordable, high-quality education.",
+  "Samarkand State Medical University": "Established in 1930 and restructured in 2022, Samarkand State Medical University (SamSMU) offers a 6-year English-medium MBBS program compliant with international standards, recognized by WHO, NMC (India), PMDC, and WDOMS. Graduates are eligible for FMGE/NExT (India, with strong success rates), USMLE, PLAB, and practice in India, Gulf countries, and worldwide. Ranked 3rd in Uzbekistan, it features modern labs, simulation-based learning, and clinical rotations in affiliated hospitals treating diverse cases, attracting over 1,000 Indian students annually for its multicultural environment and low-cost, high-exposure training.",
   "Bukhara State Medical Institute": "Bukhara State Medical Institute (BSMI), founded in 1990 in the historic city of Bukhara, provides a 6-year English-medium MBBS program recognized by WHO, NMC (India), WDOMS, FAIMER, and ECFMG. Degrees are valid for FMGE/NExT (India, ~47% pass rate), USMLE (USA), PLAB (UK), AMC (Australia), and MCCQE (Canada), supporting global practice. With a curriculum aligned to NMC guidelines, modern infrastructure, and clinical exposure in university hospitals, BSMI is popular among Indian students for its holistic approach, research focus, and affordable fees, fostering skills for international medical careers.",
 
   // RUSSIA
@@ -222,6 +224,7 @@ export default function CeecoChatbot() {
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [step, setStep] = useState(0); 
+  const [isAiMode, setIsAiMode] = useState(false); 
   
   const [userData, setUserData] = useState({
     name: "",
@@ -284,7 +287,7 @@ export default function CeecoChatbot() {
     processUserResponse(text);
   };
 
-  // Global Back Button Logic - UPDATED for new flow
+  // Global Back Button Logic
   const handleBack = () => {
     if (step === 1) {
         // Back from Name -> Role (Step 0)
@@ -307,7 +310,7 @@ export default function CeecoChatbot() {
         triggerCountryReset();
     } else if (step === 5) {
         addBotMessage("Going back to the university list...");
-        showUniversitiesForCountry(userData.country, userData.budgetSlab);
+        handleCountrySelect(userData.country, userData.budgetSlab, true); // Added true to avoid re-adding country message
     } else if (step === 6) {
         setStep(5);
         addBotMessage("Okay, please re-enter your phone number.");
@@ -376,11 +379,9 @@ export default function CeecoChatbot() {
   const processUserResponse = (text) => {
     const lowerText = text.toLowerCase().trim();
 
-    // STEP 0: Role Selection (Handled by buttons mostly, but if they type)
+    // STEP 0: Role Selection (Handled by buttons, text input is disabled/ignored here)
     if (step === 0) {
-        if (lowerText.includes("student")) handleUserTypeSelect('student');
-        else if (lowerText.includes("parent")) handleUserTypeSelect('parent');
-        else addBotMessage("Please select whether you are a Student or a Parent using the buttons above.");
+        addBotMessage("Please select whether you are a Student or a Parent using the buttons above to proceed.");
         return;
     }
 
@@ -413,6 +414,7 @@ export default function CeecoChatbot() {
        addBotMessage("Please select one of the budget slabs below for accurate university results.");
     }
 
+    // STEP 5: Phone Number
     if (step === 5) {
       const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
       if (!phoneRegex.test(text.replace(/\s/g, ''))) {
@@ -425,10 +427,11 @@ export default function CeecoChatbot() {
       return;
     }
 
+    // STEP 6: City
     if (step === 6) {
       setUserData(prev => ({ ...prev, city: text }));
       setStep(7);
-      // Automatically show education options
+      // STEP 7: Education Status (Show buttons)
       addBotMessage(
           "Noted. And finally, what is your current educational status?",
           <div className="flex flex-wrap gap-2 mt-3">
@@ -509,8 +512,16 @@ export default function CeecoChatbot() {
     }
   };
 
-  // New helper function to display universities (reused by handleCountrySelect and handleBack)
-  const showUniversitiesForCountry = (country, slab) => {
+  const handleCountrySelect = (country, slab, isBackAction = false) => {
+    setUserData(prev => ({ ...prev, country: country }));
+    
+    // Only add user message if this is NOT a back navigation
+    if (!isBackAction) {
+        addUserMessage(country);
+    }
+
+    setStep(4);
+    
     const targetSlab = normalize(slab);
     const universities = universityDatabase.filter(u => u.country === country && normalize(u.slab) === targetSlab);
     
@@ -583,16 +594,9 @@ export default function CeecoChatbot() {
     }, 1000);
   };
 
-  const handleCountrySelect = (country, slab) => {
-    setUserData(prev => ({ ...prev, country: country }));
-    setStep(4);
-    addUserMessage(country); 
-    showUniversitiesForCountry(country, slab);
-  };
-
   // --- SHOW DESCRIPTION FROM STATIC DATA ---
   const handleSelectUni = (uni) => {
-    setUserData(prev => ({ ...prev, selectedUni: uni }));
+    setUserData({ ...userData, selectedUni: uni });
     setStep(5);
     
     setIsTyping(true);
@@ -617,7 +621,7 @@ export default function CeecoChatbot() {
   };
 
   const handleEducationSelect = (status) => {
-    setUserData(prev => ({ ...prev, education: status }));
+    setUserData({ ...userData, education: status });
     addUserMessage(status);
     
     setIsTyping(true);
@@ -683,19 +687,8 @@ export default function CeecoChatbot() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 shadow-lg z-20">
         
-        {step === 7 && (
-          <div className="flex flex-wrap gap-2 mb-3 justify-center">
-            {["10th", "11th", "12th pursuing", "Neet Preparation"].map(s => (
-              <button key={s} onClick={() => handleEducationSelect(s)} 
-                className="bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-lg text-xs font-medium hover:bg-red-600 hover:text-white transition-all">
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-
         <div className="flex items-center gap-2">
-           {step > 0 && step < 9 && step !== 3 && step !== 4 && step !== 7 && (
+           {step > 0 && step < 9 && step !== 3 && step !== 4 && step !== 7 && step !== 8 && (
              <button onClick={handleBack} className="p-3 text-gray-500 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} /></button>
            )}
 
