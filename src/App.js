@@ -72,9 +72,9 @@ const universityDatabase = [
 ];
 
 const DYNAMIC_SLABS = [...new Set(universityDatabase.map(u => u.slab))].sort((a, b) => {
-    const numA = parseInt(a.split('-')[0]);
-    const numB = parseInt(b.split('-')[0]);
-    return numA - numB;
+  const numA = parseInt(a.split('-')[0]);
+  const numB = parseInt(b.split('-')[0]);
+  return numA - numB;
 });
 
 const GREETINGS = ["hi", "hello", "hey", "hii", "hellooo", "hola", "namaste", "namaskaram", "good morning", "good evening", "hlo"];
@@ -217,7 +217,7 @@ const ChatMessage = ({ msg }) => {
 
 // --- MAIN APP COMPONENT ---
 
-export default function CeecoChatbot() {
+export default function App() {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -263,6 +263,48 @@ export default function CeecoChatbot() {
     );
     setStep(0); // Step 0 is now Role Selection
   }, []);
+
+  // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
+  // --- FINAL SUBMIT TO GOOGLE SHEETS — ALL DATA SAVES 100% ---
+  const submitToGoogleSheets = async () => {
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1-Zw0fpXYuyPhb2kUBo231FM79QPXu3xqXsZ2zFRlyK_btI3xD0ROXyHVKm7N1BJ3/exec";
+
+    const payload = {
+        name: userData.name?.trim() || "Not Provided",
+        phone: userData.phone?.trim() || "Not Provided",
+        city: userData.city?.trim() || "Not Provided",
+        education: userData.education?.trim() || "Not Selected",
+        budgetSlab: userData.budgetSlab?.trim() || "Not Selected",
+        country: userData.country?.trim() || "Not Selected",
+        university: userData.selectedUni?.name?.trim() || "Not Selected",
+        userType: userData.userType?.trim() || "Not Selected"
+    };
+
+    console.log("SENDING TO SHEET:", payload);  // ← Check this in console
+
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            console.log("ALL DATA SAVED SUCCESSFULLY!");
+        } else {
+            console.error("Save failed:", await response.text());
+        }
+    } catch (err) {
+        console.error("Network error:", err);
+    }
+  };
+
+  // Trigger submission when step reaches 9 (Final Step)
+  useEffect(() => {
+      if (step === 9) {
+          submitToGoogleSheets();
+      }
+  }, [step]);
 
   const addBotMessage = (text, customRender = null) => {
     setIsTyping(true);
@@ -593,7 +635,8 @@ export default function CeecoChatbot() {
 
   // --- SHOW DESCRIPTION FROM STATIC DATA ---
   const handleSelectUni = (uni) => {
-    setUserData({ ...userData, selectedUni: uni });
+    // UPDATED: Use functional state update to preserve existing data (Name, Country, Budget)
+    setUserData(prev => ({ ...prev, selectedUni: uni }));
     setStep(5);
     
     setIsTyping(true);
@@ -618,7 +661,8 @@ export default function CeecoChatbot() {
   };
 
   const handleEducationSelect = (status) => {
-    setUserData({ ...userData, education: status });
+    // UPDATED: Use functional state update to preserve existing data (City, Phone, etc.)
+    setUserData(prev => ({ ...prev, education: status }));
     addUserMessage(status);
     
     setIsTyping(true);
@@ -648,49 +692,24 @@ export default function CeecoChatbot() {
     }, 1000);
   };
 
-    // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
-// --- FINAL SUBMIT TO GOOGLE SHEETS — ALL DATA SAVES 100% ---
-const submitToGoogleSheets = async () => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1-Zw0fpXYuyPhb2kUBo231FM79QPXu3xqXsZ2zFRlyK_btI3xD0ROXyHVKm7N1BJ3/exec";
-
-    const payload = {
-        name: userData.name?.trim() || "Not Provided",
-        phone: userData.phone?.trim() || "Not Provided",
-        city: userData.city?.trim() || "Not Provided",
-        education: userData.education?.trim() || "Not Selected",
-        budgetSlab: userData.budgetSlab?.trim() || "Not Selected",
-        country: userData.country?.trim() || "Not Selected",
-        university: userData.selectedUni?.name?.trim() || "Not Selected",
-        userType: userData.userType?.trim() || "Not Selected"
-    };
-
-    console.log("SENDING TO SHEET:", payload);  // ← Check this in console
-
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            console.log("ALL DATA SAVED SUCCESSFULLY!");
-        } else {
-            console.error("Save failed:", await response.text());
-        }
-    } catch (err) {
-        console.error("Network error:", err);
-    }
-};
-  // Trigger submission when step reaches 9 (Final Step)
-  useEffect(() => {
-      if (step === 9) {
-          submitToGoogleSheets();
-      }
-  }, [step]);
-
   return (
     <div className="flex flex-col h-screen bg-gray-50 font-sans">
+      <style>{`
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+      `}</style>
       <header className="bg-gradient-to-r from-red-700 to-red-600 text-white p-4 shadow-lg flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center space-x-2">
           <div className="bg-white p-1 rounded-full">
