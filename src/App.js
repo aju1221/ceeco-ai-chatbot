@@ -649,31 +649,37 @@ export default function CeecoChatbot() {
   };
 
     // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
+// --- FULL DATA SUBMISSION (SNAPSHOT FIX — ALL FIELDS SAVE) ---
 const submitToGoogleSheets = async () => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5yitln2CEVMQiFq4cWNG_dwdCJ0kG03UAy47vl7Ql4xhgvkGIIBkLV_-vlrxALBK-/exec";  // Update if yours changed
-
-    const payload = {
+    // Snapshot current state to avoid lag
+    const snapshot = {
         name: userData.name || "Not Provided",
         phone: userData.phone || "Not Provided",
         city: userData.city || "Not Provided",
         education: userData.education || "Not Selected",
-        budgetSlab: userData.budgetSlab || "Not Selected",  // For Budget column
+        budgetSlab: userData.budgetSlab || "Not Selected",
         country: userData.country || "Not Selected",
         university: userData.selectedUni ? userData.selectedUni.name : "Not Selected",
-        userType: userData.userType || "Not Selected"  // ← Student or Parent
+        userType: userData.userType || "Not Selected",
+        timestamp: new Date().toLocaleString('en-IN')
     };
+
+    console.log("SNAPSHOT BEFORE SAVE (check if all fields filled):", snapshot);  // Debug: See this in console
+
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5aNhVRrYQzASiO4RtR0Yn0kjqJ3ubMhxebhSc37lIQ1g0fM9ijPcY6wSF7_c0CGmP/exec";  // Update if changed
 
     try {
         const response = await fetch(SCRIPT_URL, {
             method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },  // CORS bypass
-            body: JSON.stringify(payload)
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(snapshot)
         });
 
+        const result = await response.text();
         if (response.ok) {
-            console.log("✅ FULL LEAD SAVED! Payload:", payload);  // Debug: Check console for all data
+            console.log("✅ FULL LEAD SAVED! Snapshot:", snapshot);
         } else {
-            console.error("❌ Error:", await response.text());
+            console.error("❌ Save error:", result);
         }
     } catch (err) {
         console.error("❌ Fetch failed:", err);
