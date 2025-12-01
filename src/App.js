@@ -299,12 +299,15 @@ export default function App() {
     }
   };
 
-  // Trigger submission when step reaches 9 (Final Step)
-  useEffect(() => {
-      if (step === 9) {
-          submitToGoogleSheets();
-      }
-  }, [step]);
+  // Trigger submission ONLY ONCE when step reaches 9 (Final Step)
+const [hasSubmitted, setHasSubmitted] = useState(false);   // ← ADD THIS LINE (anywhere near other useState)
+
+useEffect(() => {
+    if (step === 9 && !hasSubmitted) {    // ← ONLY RUN ONCE
+        setHasSubmitted(true);             // ← Mark as submitted
+        submitToGoogleSheets();            // ← Save only the first time
+    }
+}, [step, hasSubmitted]);                 // ← Add hasSubmitted to dependencies
 
   const addBotMessage = (text, customRender = null) => {
     setIsTyping(true);
