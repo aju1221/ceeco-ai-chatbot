@@ -272,7 +272,7 @@ export default function App() {
 
   // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
 const submitToGoogleSheets = async () => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5aNhVRrYQzASiO4RtR0Yn0kjqJ3ubMhxebhSc37lIQ1g0fM9ijPcY6wSF7_c0CGmP/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9F7NqvrTBU9Pdx0yioR0EsaewzYSJ3yPhFZQcTFqXo-0q3y9gNBsHoKrGhskzMfbr/exec";
 
     const payload = {
         userType:   userData.userType || "Not Selected",      // Student / Parent
