@@ -267,7 +267,7 @@ export default function App() {
   // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
   // --- FINAL SUBMIT TO GOOGLE SHEETS — ALL DATA SAVES 100% ---
   const submitToGoogleSheets = async () => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1-Zw0fpXYuyPhb2kUBo231FM79QPXu3xqXsZ2zFRlyK_btI3xD0ROXyHVKm7N1BJ3/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxIyN9CX3Wj3ax4DNjYkCO3mudxBXCyI61lh4vuxD6c6zX7wdDatj4gYvdtc0K8nV3b/exec";
 
     const payload = {
         name: userData.name?.trim() || "Not Provided",
