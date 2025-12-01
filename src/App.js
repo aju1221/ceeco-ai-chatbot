@@ -235,6 +235,12 @@ export default function App() {
   });
   
   const messagesEndRef = useRef(null);
+  const userDataRef = useRef(userData);
+
+  // Keep ref updated with latest user data for stale closures
+  useEffect(() => {
+    userDataRef.current = userData;
+  }, [userData]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -640,7 +646,7 @@ useEffect(() => {
   const handleSelectUni = (uni) => {
     // UPDATED: Use functional state update to preserve existing data (Name, Country, Budget)
     setUserData(prev => ({ ...prev, selectedUni: uni }));
-    setStep(5);
+    // Do not force setStep(5) here yet, we will decide based on existing data
     
     setIsTyping(true);
     
@@ -656,9 +662,55 @@ useEffect(() => {
 
         addBotMessage(description);
         
-        // Follow up message after delay
+        // Follow up message after delay - CHECKING FOR EXISTING DATA
         setTimeout(() => {
-            addBotMessage("To check your eligibility and receive the official brochure, please share your **Phone Number**.");
+            const currentData = userDataRef.current;
+            
+            // Check what data we already have to avoid asking again
+            if (currentData.phone && currentData.city && currentData.education) {
+                 // We have everything, go to final step directly
+                 setStep(9); // This triggers the submit useEffect
+                 addBotMessage(
+                    <div className="space-y-2">
+                        <p>We have updated your interest for <strong>{uni.name}</strong>.</p>
+                        <p>Since we already have your details, our team will contact you shortly to assist you further!</p>
+                        <p className="font-bold text-red-600 mt-2">Check your WhatsApp for the brochure.</p>
+                    </div>,
+                    <div className="mt-4">
+                        <a 
+                            href="https://wa.me/918137878027" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white py-3 px-6 rounded-xl text-base font-bold transition-all shadow-md w-full sm:w-auto transform hover:scale-105"
+                        >
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-6 h-6" /> 
+                            Contact Us Now
+                        </a>
+                    </div>
+                 );
+            } else if (currentData.phone && currentData.city) {
+                 // Have Phone & City, need Education
+                 setStep(7);
+                 addBotMessage(
+                    "Noted. And finally, what is your current educational status?",
+                    <div className="flex flex-wrap gap-2 mt-3">
+                        {["10th", "11th", "12th pursuing", "Neet Preparation"].map(s => (
+                        <button key={s} onClick={() => handleEducationSelect(s)} 
+                            className="bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-lg text-xs font-medium hover:bg-red-600 hover:text-white transition-all flex-grow">
+                            {s}
+                        </button>
+                        ))}
+                    </div>
+                 );
+            } else if (currentData.phone) {
+                 // Have Phone, need City
+                 setStep(6);
+                 addBotMessage("Thank you! ✅\n\nWhich city are you currently located in?");
+            } else {
+                 // Need Phone (Standard flow)
+                 setStep(5);
+                 addBotMessage("To check your eligibility and receive the official brochure, please share your **Phone Number**.");
+            }
         }, 1500);
     }, 800);
   };
