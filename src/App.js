@@ -271,39 +271,31 @@ export default function App() {
   }, []);
 
   // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
-  // --- FINAL SUBMIT TO GOOGLE SHEETS — ALL DATA SAVES 100% ---
-  const submitToGoogleSheets = async () => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxIyN9CX3Wj3ax4DNjYkCO3mudxBXCyI61lh4vuxD6c6zX7wdDatj4gYvdtc0K8nV3b/exec";
+const submitToGoogleSheets = async () => {
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5aNhVRrYQzASiO4RtR0Yn0kjqJ3ubMhxebhSc37lIQ1g0fM9ijPcY6wSF7_c0CGmP/exec";
 
     const payload = {
-        name: userData.name?.trim() || "Not Provided",
-        phone: userData.phone?.trim() || "Not Provided",
-        city: userData.city?.trim() || "Not Provided",
-        education: userData.education?.trim() || "Not Selected",
-        budgetSlab: userData.budgetSlab?.trim() || "Not Selected",
-        country: userData.country?.trim() || "Not Selected",
-        university: userData.selectedUni?.name?.trim() || "Not Selected",
-        userType: userData.userType?.trim() || "Not Selected"
+        userType:   userData.userType || "Not Selected",      // Student / Parent
+        name:       userData.name || "Not Provided",
+        phone:      userData.phone || "Not Provided",
+        city:       userData.city || "Not Provided",
+        education:  userData.education || "Not Selected",
+        budgetSlab: userData.budgetSlab || "Not Selected",
+        country:    userData.country || "Not Selected",
+        university: userData.selectedUni ? userData.selectedUni.name : "Not Selected"
     };
 
-    console.log("SENDING TO SHEET:", payload);  // ← Check this in console
-
     try {
-        const response = await fetch(SCRIPT_URL, {
+        await fetch(SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
         });
-
-        if (response.ok) {
-            console.log("ALL DATA SAVED SUCCESSFULLY!");
-        } else {
-            console.error("Save failed:", await response.text());
-        }
+        console.log("Lead saved successfully (only once!)");
     } catch (err) {
-        console.error("Network error:", err);
+        console.error("Save failed:", err);
     }
-  };
+};
 
   // Trigger submission ONLY ONCE when step reaches 9 (Final Step)
 const [hasSubmitted, setHasSubmitted] = useState(false);   // ← ADD THIS LINE (anywhere near other useState)
