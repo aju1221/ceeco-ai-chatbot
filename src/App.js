@@ -748,8 +748,8 @@ export default function App() {
     <div className="flex flex-col h-screen bg-gray-50 font-sans">
       <style>{`
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .animate-fade-in-up {
             animation: fadeInUp 0.4s ease-out forwards;
@@ -762,22 +762,22 @@ export default function App() {
             scrollbar-width: none;
         }
       `}</style>
-      <header className="bg-gradient-to-r from-red-700 to-red-600 text-white p-4 shadow-lg flex items-center justify-between fixed top-0 left-0 right-0 z-50">
+      <header className="bg-gradient-to-r from-red-700 to-red-600 text-white shadow-lg flex items-center justify-between fixed top-0 left-0 right-0 z-50 py-2 px-4 md:p-4">
         <div className="flex items-center space-x-2">
           <div className="bg-white p-1 rounded-full">
              {/* Using uploaded logo if available, fallback to icon */}
-             <img src="https://ceecointernational.com/wp-content/uploads/2025/11/cecco.png" alt="Ceeco Logo" className="w-8 h-8 object-contain" onError={(e) => {e.target.onerror = null; e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
+             <img src="https://ceecointernational.com/wp-content/uploads/2025/11/cecco.png" alt="Ceeco Logo" className="w-7 h-7 md:w-8 md:h-8 object-contain" onError={(e) => {e.target.onerror = null; e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
              <School className="text-red-600 hidden" size={20} />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-wide">Ceeco AI</h1>
+            <h1 className="text-base md:text-lg font-bold tracking-wide">Ceeco AI</h1>
             <p className="text-xs text-red-100 opacity-90">MBBS Study Abroad Expert</p>
           </div>
         </div>
         
         {/* Call Button & Status */}
         <div className="flex items-center gap-3">
-            <a href="tel:+918137878027" className="bg-white text-red-600 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center hover:bg-red-50 transition-colors">
+            <a href="tel:+918137878027" className="bg-white text-red-600 px-2 py-1 md:px-3 md:py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center hover:bg-red-50 transition-colors">
                 <Phone size={14} className="mr-1" /> Call Now
             </a>
             <div className="flex items-center gap-1 bg-red-800 bg-opacity-50 px-2 py-1 rounded text-[10px] font-medium">
@@ -786,7 +786,7 @@ export default function App() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 pb-48 pt-24 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto p-4 pb-48 pt-20 md:pt-24 scrollbar-hide">
         {messages.map((msg, idx) => (
           <ChatMessage key={idx} msg={msg} />
         ))}
