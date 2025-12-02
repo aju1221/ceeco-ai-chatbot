@@ -271,41 +271,46 @@ export default function App() {
   }, []);
 
   // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
-const submitToGoogleSheets = async () => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3lvTR3PSzuA-iLq8-ATddvoo-jERSDLukjJ3KYs9HTCBTSi_CDpbFDjqM3GFxQVsw/exec";
+  // --- FINAL SUBMIT TO GOOGLE SHEETS — ALL DATA SAVES 100% ---
+  const submitToGoogleSheets = async () => {
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1-Zw0fpXYuyPhb2kUBo231FM79QPXu3xqXsZ2zFRlyK_btI3xD0ROXyHVKm7N1BJ3/exec";
 
     const payload = {
-        userType:   userData.userType || "Not Selected",      // Student / Parent
-        name:       userData.name || "Not Provided",
-        phone:      userData.phone || "Not Provided",
-        city:       userData.city || "Not Provided",
-        education:  userData.education || "Not Selected",
-        budgetSlab: userData.budgetSlab || "Not Selected",
-        country:    userData.country || "Not Selected",
-        university: userData.selectedUni ? userData.selectedUni.name : "Not Selected"
+        name: userData.name?.trim() || "Not Provided",
+        phone: userData.phone?.trim() || "Not Provided",
+        city: userData.city?.trim() || "Not Provided",
+        education: userData.education?.trim() || "Not Selected",
+        budgetSlab: userData.budgetSlab?.trim() || "Not Selected",
+        country: userData.country?.trim() || "Not Selected",
+        university: userData.selectedUni?.name?.trim() || "Not Selected",
+        userType: userData.userType?.trim() || "Not Selected"
     };
 
+    console.log("SENDING TO SHEET:", payload);  // ← Check this in console
+
     try {
-        await fetch(SCRIPT_URL, {
+        const response = await fetch(SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
         });
-        console.log("Lead saved successfully (only once!)");
+
+        if (response.ok) {
+            console.log("ALL DATA SAVED SUCCESSFULLY!");
+        } else {
+            console.error("Save failed:", await response.text());
+        }
     } catch (err) {
-        console.error("Save failed:", err);
+        console.error("Network error:", err);
     }
-};
+  };
 
-  // Trigger submission ONLY ONCE when step reaches 9 (Final Step)
-const [hasSubmitted, setHasSubmitted] = useState(false);   // ← ADD THIS LINE (anywhere near other useState)
-
-useEffect(() => {
-    if (step === 9 && !hasSubmitted) {    // ← ONLY RUN ONCE
-        setHasSubmitted(true);             // ← Mark as submitted
-        submitToGoogleSheets();            // ← Save only the first time
-    }
-}, [step, hasSubmitted]);                 // ← Add hasSubmitted to dependencies
+  // Trigger submission when step reaches 9 (Final Step)
+  useEffect(() => {
+      if (step === 9) {
+          submitToGoogleSheets();
+      }
+  }, [step]);
 
   const addBotMessage = (text, customRender = null) => {
     setIsTyping(true);
@@ -757,7 +762,7 @@ useEffect(() => {
             scrollbar-width: none;
         }
       `}</style>
-      <header className="bg-gradient-to-r from-red-700 to-red-600 text-white p-4 shadow-lg flex items-center justify-between sticky top-0 z-10">
+      <header className="bg-gradient-to-r from-red-700 to-red-600 text-white p-4 shadow-lg flex items-center justify-between fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center space-x-2">
           <div className="bg-white p-1 rounded-full">
              {/* Using uploaded logo if available, fallback to icon */}
@@ -781,7 +786,7 @@ useEffect(() => {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 pb-48 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto p-4 pb-48 pt-24 scrollbar-hide">
         {messages.map((msg, idx) => (
           <ChatMessage key={idx} msg={msg} />
         ))}
