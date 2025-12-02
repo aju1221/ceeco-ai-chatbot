@@ -244,7 +244,10 @@ export default function App() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        // Only scroll if there are multiple messages to avoid hiding the welcome text header
+        if (messages.length > 1 || (isTyping && messages.length > 0)) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
     }, 100);
     return () => clearTimeout(timer);
   }, [messages, isTyping]);
@@ -766,11 +769,11 @@ export default function App() {
         <div className="flex items-center space-x-2">
           <div className="bg-white p-1 rounded-full">
              {/* Using uploaded logo if available, fallback to icon */}
-             <img src="https://ceecointernational.com/wp-content/uploads/2025/11/cecco.png" alt="Ceeco Logo" className="w-7 h-7 md:w-8 md:h-8 object-contain" onError={(e) => {e.target.onerror = null; e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
+             <img src="https://ceecointernational.com/wp-content/uploads/2025/11/cecco.png" alt="Ceeco Logo" className="w-6 h-6 md:w-8 md:h-8 object-contain" onError={(e) => {e.target.onerror = null; e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
              <School className="text-red-600 hidden" size={20} />
           </div>
           <div>
-            <h1 className="text-base md:text-lg font-bold tracking-wide">Ceeco AI</h1>
+            <h1 className="text-sm md:text-lg font-bold tracking-wide">Ceeco AI</h1>
             <p className="text-xs text-red-100 opacity-90">MBBS Study Abroad Expert</p>
           </div>
         </div>
