@@ -278,7 +278,7 @@ const submitToGoogleSheets = async () => {
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3lvTR3PSzuA-iLq8-ATddvoo-jERSDLukjJ3KYs9HTCBTSi_CDpbFDjqM3GFxQVsw/exec";
 
     const payload = {
-        userType:   userData.userType || "Not Selected",      // Student / Parent
+        userType:   userData.userType || "Not Selected",       // Student / Parent
         name:       userData.name || "Not Provided",
         phone:      userData.phone || "Not Provided",
         city:       userData.city || "Not Provided",
@@ -344,26 +344,27 @@ useEffect(() => {
              <button onClick={() => handleUserTypeSelect('parent')} className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-lg text-sm hover:bg-red-50 hover:border-red-400 transition-all flex-grow">I am a Parent</button>
           </div>
         );
-    } else if (step === 2) {
-        // Back from Budget -> Name
+    } else if (step === 5) {
+        // Back from Phone -> Name (Step 1)
         setStep(1);
         addBotMessage("Okay, let's re-enter your name. May I know your name?");
-    } else if (step === 3) { 
-        triggerBudgetReset();
-    } else if (step === 4) { 
-        triggerCountryReset();
-    } else if (step === 5) {
-        addBotMessage("Going back to the university list...");
-        handleCountrySelect(userData.country, userData.budgetSlab, true); // Added true to avoid re-adding country message
     } else if (step === 6) {
+        // Back from City -> Phone (Step 5)
         setStep(5);
         addBotMessage("Okay, please re-enter your phone number.");
     } else if (step === 7) {
+        // Back from Education -> City (Step 6)
         setStep(6);
         addBotMessage("Going back to city selection.");
-    } else if (step === 9) { // Final Step -> Education
+    } else if (step === 2) {
+        // Back from Budget -> Education (Step 7)
         setStep(7);
         addBotMessage("Okay, please re-select your educational status.");
+    } else if (step === 3) {
+        // Back from Country -> Budget (Step 2)
+        triggerBudgetReset();
+    } else if (step === 4) { 
+        triggerCountryReset();
     }
   };
 
@@ -429,36 +430,21 @@ useEffect(() => {
         return;
     }
 
-    // STEP 1: Name
+    // STEP 1: Name -> triggers PHONE (Step 5)
     if (step === 1) {
       if (GREETINGS.includes(lowerText)) {
         addBotMessage("Hello! 👋 Please tell me your actual name so I can address you properly.");
         return;
       }
       setUserData(prev => ({ ...prev, name: text }));
-      setStep(2);
+      setStep(5); // Go to Phone
       addBotMessage(
-        `Nice to meet you, ${text}! 😊\n\nPlease select your total tuition fee budget in INR`,
-        <div className="flex flex-wrap gap-2 mt-3">
-             {DYNAMIC_SLABS.map((slab) => (
-                 <button 
-                   key={slab}
-                   onClick={() => handleBudgetSelect(slab)} 
-                   className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-full shadow-sm hover:bg-red-50 hover:border-red-400 transition-all text-sm mb-1"
-                 >
-                   {slab}
-                 </button>
-             ))}
-        </div>
+        `Nice to meet you, ${text}! 😊\n\nTo help us serve you better, could you please share your Phone Number?`
       );
       return;
     }
 
-    if (step === 2) {
-       addBotMessage("Please select one of the budget slabs below for accurate university results.");
-    }
-
-    // STEP 5: Phone Number
+    // STEP 5: Phone Number -> triggers CITY (Step 6)
     if (step === 5) {
       const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
       if (!phoneRegex.test(text.replace(/\s/g, ''))) {
@@ -471,7 +457,7 @@ useEffect(() => {
       return;
     }
 
-    // STEP 6: City
+    // STEP 6: City -> triggers EDUCATION (Step 7)
     if (step === 6) {
       setUserData(prev => ({ ...prev, city: text }));
       setStep(7);
@@ -500,6 +486,32 @@ useEffect(() => {
           setStep(1);
           addBotMessage("Great! May I know your name, please?");
       }, 600);
+  };
+
+  const handleEducationSelect = (status) => {
+    // UPDATED: Use functional state update to preserve existing data (City, Phone, etc.)
+    setUserData(prev => ({ ...prev, education: status }));
+    addUserMessage(status);
+    
+    setIsTyping(true);
+    setTimeout(() => {
+        setIsTyping(false);
+        // Step 7 finished -> Go to BUDGET (Step 2)
+        setStep(2);
+        addBotMessage("Great! Now, let's find the best university for you.\n\nPlease select your total tuition fee budget in INR",
+          <div className="flex flex-wrap gap-2 mt-3">
+               {DYNAMIC_SLABS.map((slab) => (
+                   <button 
+                     key={slab}
+                     onClick={() => handleBudgetSelect(slab)} 
+                     className="bg-white border border-red-200 text-red-700 font-semibold py-2 px-4 rounded-full shadow-sm hover:bg-red-50 hover:border-red-400 transition-all text-sm mb-1"
+                   >
+                     {slab}
+                   </button>
+               ))}
+          </div>
+        );
+    }, 1000);
   };
 
   const handleBudgetSelect = (slab) => {
@@ -642,7 +654,6 @@ useEffect(() => {
   const handleSelectUni = (uni) => {
     // UPDATED: Use functional state update to preserve existing data (Name, Country, Budget)
     setUserData(prev => ({ ...prev, selectedUni: uni }));
-    // Do not force setStep(5) here yet, we will decide based on existing data
     
     setIsTyping(true);
     
@@ -658,88 +669,29 @@ useEffect(() => {
 
         addBotMessage(description);
         
-        // Follow up message after delay - CHECKING FOR EXISTING DATA
+        // Follow up message after delay - All data is already collected
         setTimeout(() => {
-            const currentData = userDataRef.current;
-            
-            // Check what data we already have to avoid asking again
-            if (currentData.phone && currentData.city && currentData.education) {
-                 // We have everything, go to final step directly
-                 setStep(9); // This triggers the submit useEffect
-                 addBotMessage(
-                    <div className="space-y-2">
-                        <p>We have updated your interest for <strong>{uni.name}</strong>.</p>
-                        <p>our team will contact you shortly to assist you further!</p>
-                    </div>,
-                    <div className="mt-4">
-                        <a 
-                            href="https://wa.me/918137878027" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white py-3 px-6 rounded-xl text-base font-bold transition-all shadow-md w-full sm:w-auto transform hover:scale-105"
-                        >
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-6 h-6" /> 
-                            Contact Us Now
-                        </a>
-                    </div>
-                 );
-            } else if (currentData.phone && currentData.city) {
-                 // Have Phone & City, need Education
-                 setStep(7);
-                 addBotMessage(
-                    "Noted. And finally, what is your current educational status?",
-                    <div className="flex flex-wrap gap-2 mt-3">
-                        {["10th", "11th", "12th pursuing", "Neet Preparation"].map(s => (
-                        <button key={s} onClick={() => handleEducationSelect(s)} 
-                            className="bg-red-50 text-red-700 border border-red-200 px-3 py-2 rounded-lg text-xs font-medium hover:bg-red-600 hover:text-white transition-all flex-grow">
-                            {s}
-                        </button>
-                        ))}
-                    </div>
-                 );
-            } else if (currentData.phone) {
-                 // Have Phone, need City
-                 setStep(6);
-                 addBotMessage("Thank you! ✅\n\nWhich city are you currently located in?");
-            } else {
-                 // Need Phone (Standard flow)
-                 setStep(5);
-                 addBotMessage("To check your eligibility and receive detailed course information, please share your Phone Number.");
-            }
+             // We have everything, go to final step directly
+             setStep(9); // This triggers the submit useEffect
+             addBotMessage(
+                <div className="space-y-2">
+                    <p>We have updated your interest for <strong>{uni.name}</strong>.</p>
+                    <p>our team will contact you shortly to assist you further!</p>
+                </div>,
+                <div className="mt-4">
+                    <a 
+                        href="https://wa.me/918137878027" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white py-3 px-6 rounded-xl text-base font-bold transition-all shadow-md w-full sm:w-auto transform hover:scale-105"
+                    >
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-6 h-6" /> 
+                        Contact Us Now
+                    </a>
+                </div>
+             );
         }, 1500);
     }, 800);
-  };
-
-  const handleEducationSelect = (status) => {
-    // UPDATED: Use functional state update to preserve existing data (City, Phone, etc.)
-    setUserData(prev => ({ ...prev, education: status }));
-    addUserMessage(status);
-    
-    setIsTyping(true);
-    setTimeout(() => {
-        setIsTyping(false);
-        setStep(9); // End
-        addBotMessage(
-            <div className="space-y-2">
-              <p>Thank you! 🌟</p>
-              <p>You are eligible for **FREE Counseling** from our experts.</p>
-              <p>Our team will contact you shortly on your number to answer all your doubts regarding the admission process.</p>
-              <p className="font-bold text-red-600 mt-4 text-lg animate-pulse">skip the waiting and contact us now!!</p>
-              <p>Have a great day! ❤️</p>
-            </div>,
-            <div className="mt-4">
-               <a 
-                 href="https://wa.me/918137878027" 
-                 target="_blank" 
-                 rel="noopener noreferrer"
-                 className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white py-3 px-6 rounded-xl text-base font-bold transition-all shadow-md w-full sm:w-auto transform hover:scale-105"
-               >
-                 <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-6 h-6" /> 
-                 Whatsapp
-               </a>
-            </div>
-        );
-    }, 1000);
   };
 
   return (
