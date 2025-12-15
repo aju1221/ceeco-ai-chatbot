@@ -273,47 +273,43 @@ export default function App() {
     setStep(0); // Step 0 is now Role Selection
   }, []);
 
-  // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
-  // --- FINAL SUBMIT TO GOOGLE SHEETS — ALL DATA SAVES 100% ---
-  const submitToGoogleSheets = async () => {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1-Zw0fpXYuyPhb2kUBo231FM79QPXu3xqXsZ2zFRlyK_btI3xD0ROXyHVKm7N1BJ3/exec";
+ // --- GOOGLE SHEETS SUBMISSION (CORS-FIXED: text/plain - WORKS ON VERCEL + WORDPRESS) ---
+const submitToGoogleSheets = async () => {
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3lvTR3PSzuA-iLq8-ATddvoo-jERSDLukjJ3KYs9HTCBTSi_CDpbFDjqM3GFxQVsw/exec";
 
     const payload = {
-        name: userData.name?.trim() || "Not Provided",
-        phone: userData.phone?.trim() || "Not Provided",
-        city: userData.city?.trim() || "Not Provided",
-        education: userData.education?.trim() || "Not Selected",
-        budgetSlab: userData.budgetSlab?.trim() || "Not Selected",
-        country: userData.country?.trim() || "Not Selected",
-        university: userData.selectedUni?.name?.trim() || "Not Selected",
-        userType: userData.userType?.trim() || "Not Selected"
+        userType:   userData.userType || "Not Selected",      // Student / Parent
+        name:       userData.name || "Not Provided",
+        phone:      userData.phone || "Not Provided",
+        city:       userData.city || "Not Provided",
+        education:  userData.education || "Not Selected",
+        budgetSlab: userData.budgetSlab || "Not Selected",
+        country:    userData.country || "Not Selected",
+        university: userData.selectedUni ? userData.selectedUni.name : "Not Selected"
     };
 
-    console.log("SENDING TO SHEET:", payload);  // ← Check this in console
-
     try {
-        const response = await fetch(SCRIPT_URL, {
+        await fetch(SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
         });
-
-        if (response.ok) {
-            console.log("ALL DATA SAVED SUCCESSFULLY!");
-        } else {
-            console.error("Save failed:", await response.text());
-        }
+        console.log("Lead saved successfully (only once!)");
     } catch (err) {
-        console.error("Network error:", err);
+        console.error("Save failed:", err);
     }
-  };
+};
 
-  // Trigger submission when step reaches 9 (Final Step)
-  useEffect(() => {
-      if (step === 9) {
-          submitToGoogleSheets();
-      }
-  }, [step]);
+  // Trigger submission ONLY ONCE when step reaches 9 (Final Step)
+const [hasSubmitted, setHasSubmitted] = useState(false);   // ← ADD THIS LINE (anywhere near other useState)
+
+useEffect(() => {
+    if (step === 9 && !hasSubmitted) {    // ← ONLY RUN ONCE
+        setHasSubmitted(true);             // ← Mark as submitted
+        submitToGoogleSheets();            // ← Save only the first time
+    }
+}, [step, hasSubmitted]);                 // ← Add hasSubmitted to dependencies
+
 
   const addBotMessage = (text, customRender = null) => {
     setIsTyping(true);
@@ -673,8 +669,7 @@ export default function App() {
                  addBotMessage(
                     <div className="space-y-2">
                         <p>We have updated your interest for <strong>{uni.name}</strong>.</p>
-                        <p>Since we already have your details, our team will contact you shortly to assist you further!</p>
-                        <p className="font-bold text-red-600 mt-2">Check your WhatsApp for the brochure.</p>
+                        <p>our team will contact you shortly to assist you further!</p>
                     </div>,
                     <div className="mt-4">
                         <a 
@@ -709,7 +704,7 @@ export default function App() {
             } else {
                  // Need Phone (Standard flow)
                  setStep(5);
-                 addBotMessage("To check your eligibility and receive the official brochure, please share your **Phone Number**.");
+                 addBotMessage("To check your eligibility and receive detailed course information, please share your Phone Number.");
             }
         }, 1500);
     }, 800);
