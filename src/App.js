@@ -294,21 +294,32 @@ const submitToGoogleSheets = async () => {
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
         });
-        console.log("Lead saved successfully (only once!)");
+        console.log("Lead saved successfully!");
     } catch (err) {
         console.error("Save failed:", err);
     }
 };
 
-  // Trigger submission ONLY ONCE when step reaches 9 (Final Step)
-const [hasSubmitted, setHasSubmitted] = useState(false);   // ← ADD THIS LINE (anywhere near other useState)
+  // State to track if we have already saved contact/final info to prevent duplicates
+  const [hasSavedContact, setHasSavedContact] = useState(false);
+  const [hasSavedFinal, setHasSavedFinal] = useState(false);
 
-useEffect(() => {
-    if (step === 9 && !hasSubmitted) {    // ← ONLY RUN ONCE
-        setHasSubmitted(true);             // ← Mark as submitted
-        submitToGoogleSheets();            // ← Save only the first time
+  useEffect(() => {
+    // 1. Partial Save: After City is collected (Step 7 is reached)
+    // We check for name, phone, and city to be sure.
+    if (step === 7 && !hasSavedContact && userData.name && userData.phone && userData.city) {
+        setHasSavedContact(true);
+        submitToGoogleSheets();
+        console.log("Partial lead saved (Name, Phone, City)");
     }
-}, [step, hasSubmitted]);                 // ← Add hasSubmitted to dependencies
+
+    // 2. Final Save: When all steps are done (Step 9 is reached)
+    if (step === 9 && !hasSavedFinal) {
+        setHasSavedFinal(true);
+        submitToGoogleSheets();
+        console.log("Final lead saved (Complete Data)");
+    }
+  }, [step, userData, hasSavedContact, hasSavedFinal]);
 
 
   const addBotMessage = (text, customRender = null) => {
